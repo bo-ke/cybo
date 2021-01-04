@@ -52,6 +52,10 @@ class _NamespaceDependentDefaultDict(defaultdict):
         dict.__setitem__(self, key, value)
         return value
 
+    def add_non_padded_namespaces(self, non_padded_namespaces: Set[str]):
+        # 新增 non_padded_namespaces
+        self._non_padded_namespaces.update(non_padded_namespaces)
+
 
 class _TokenToIndexDefaultDict(_NamespaceDependentDefaultDict):
     """token_to_index dict: {namespace_1: {}, namespace_2: {...}}
@@ -98,8 +102,59 @@ class Vocabulary():
     def _extend(self,
                 counter: Dict[str, Dict[str, int]],
                 min_count: Dict[str, int] = None,
-                non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES):
+                non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
+                tokens_to_add: Dict[str, List[str]] = None):
+        """往vocab中添加元素
+
+        Args:
+            counter (Dict[str, Dict[str, int]]): {namespace: {$word: count, ...}, ...}
+            min_count (Dict[str, int], optional): 计入vocab的namespace对应token最小count, {namespace: min_count, ...}
+            non_padded_namespaces (Iterable[str], optional): non_padded_namespace. Defaults to DEFAULT_NON_PADDED_NAMESPACES.
+            tokens_to_add (Dict[str, List[str]], optional): 添加到namespace中的tokens, {namespace: [token, token, ...], ...}.
+        """
         min_count = min_count or {}
         non_padded_namespaces = set(non_padded_namespaces)
-        
-        
+        counter = counter or {}
+        tokens_to_add = tokens_to_add or {}
+        # 返回默认namespaces集合 与 参数返回namespace集合
+        # current_namespaces 一般情况下为空
+        # current_namespaces = {*self._token_to_index}
+        # extension_namespaces = {*counter, *tokens_to_add}
+        self._token_to_index.add_non_padded_namespaces(non_padded_namespaces)
+        self._index_to_token.add_non_padded_namespaces(non_padded_namespaces)
+        self._non_padded_namespaces.update(non_padded_namespaces)
+        # 添加counter中元素到counter
+        for namespace in counter:
+            token_counters = list(counter[namespace].items())
+            # 对counter中元素按频次从高到低排序
+            token_counters.sort(key=lambda x: x[1], reverse=True)
+            for token, count in token_counters:
+                if count >= min_count.get(namespace, 1):
+                    self.add_token_to_namespace(token, namespace)
+        # 添加tokens_to_add中元素到vocab
+        for namespace, tokens in tokens_to_add:
+            for token in tokens:
+                self.add_token_to_namespace(token, namespace)
+
+    def add_token_to_namespace(self, token, namespace):
+        """往namespace dict中添加token
+
+        Args:
+            token ([str]): 添加的token
+            namespace ([str]): token对应的namespace
+        """
+        if token not in self._token_to_index[namespace]:
+            index = len(self._token_to_index[namespace])
+            self._token_to_index[namespace][token] = index
+            self._index_to_token[namespace][index] = token
+
+    def get_vocab_size(self, namespace: str = "tokens") -> int:
+        """获取对应namespace的vocab_size
+
+        Args:
+            namespace (str, optional):
+
+        Returns:
+            int: vocab_size
+        """
+        return len(self._token_to_index[namespace])
