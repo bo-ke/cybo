@@ -158,3 +158,16 @@ class Vocabulary():
             int: vocab_size
         """
         return len(self._token_to_index[namespace])
+
+    def get_token_index(self, token: str, namespace: str="tokens") -> int:
+        """获取token index
+
+        Args:
+            token (str): 对应的token
+            namespace (str, optional): token对应的namespace. Defaults to "tokens".
+
+        Returns:
+            int: 返回的index
+        """
+        return self._token_to_index[namespace].get(token, self._oov_token)
+        
