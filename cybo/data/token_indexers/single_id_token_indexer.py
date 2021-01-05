@@ -16,6 +16,7 @@ from overrides import overrides
 
 from cybo.data.tokenizers.token import Token
 from cybo.data.token_indexers.token_indexer import TokenIndexer
+from cybo.data.vocabulary import Vocabulary
 
 
 class SingleIdTokenIndexer(TokenIndexer):
@@ -27,25 +28,38 @@ class SingleIdTokenIndexer(TokenIndexer):
         Args:
             feature_name (str, optional): `Tokens` features Defaults to "text".
         """
+        self.namespace = namespace
         self.lowercase_tokens = lowercase_tokens
         self.feature_name = feature_name
         super().__init__()
 
     @overrides
-    def count_vocab_items(self, tokens, counter):
-        return super().count_vocab_items(tokens, counter)
+    def count_vocab_items(self, token: Token, counter: Dict[str, Dict[str, int]]):
+        if self.namespace:
+            text = self._get_feature_value(token)
+            if self.lowercase_tokens:
+                text = text.lower()
+            counter[self.namespace][text] += 1
 
     @overrides
-    def tokens_to_indices(self, tokens: List[Token], vocab):
+    def tokens_to_indices(self, tokens: List[Token], vocabulary: Vocabulary):
+        """将tokens转换成indices
+
+        Args:
+            tokens (List[Token]): tokens
+            vocabulary (Vocabulary): vocabulary
+
+        Returns:
+            dict: {namespace: indices}
+        """
         indices = List[int] = []
 
         for token in tokens:
             text = self._get_feature_value(token)
             if self.lowercase_tokens:
                 text = text.lower()
-            indices.append()
-            # todo
-
+            indices.append(vocabulary.get_token_index(text, self.namespace))
+        return {self.namespace: indices}
 
     def _get_feature_value(self, token: Token) -> str:
         """
