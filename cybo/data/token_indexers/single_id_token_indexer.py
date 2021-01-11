@@ -52,7 +52,7 @@ class SingleIdTokenIndexer(TokenIndexer):
         Returns:
             dict: {namespace: indices}
         """
-        indices = List[int] = []
+        indices : List[int] = []
 
         for token in tokens:
             text = self._get_feature_value(token)
