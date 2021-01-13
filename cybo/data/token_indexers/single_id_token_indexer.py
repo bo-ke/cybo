@@ -11,12 +11,13 @@
 
 
 '''
-from typing import List, Optional
+from typing import List, Optional, Dict
 from overrides import overrides
 
 from cybo.data.tokenizers.token import Token
 from cybo.data.token_indexers.token_indexer import TokenIndexer
 from cybo.data.vocabulary import Vocabulary
+from cybo.data.instance import Instance
 
 
 class SingleIdTokenIndexer(TokenIndexer):
@@ -52,7 +53,7 @@ class SingleIdTokenIndexer(TokenIndexer):
         Returns:
             dict: {namespace: indices}
         """
-        indices : List[int] = []
+        indices: List[int] = []
 
         for token in tokens:
             text = self._get_feature_value(token)
