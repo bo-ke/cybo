@@ -24,5 +24,5 @@ class WhiteSpaceTokenizer(Tokenizer):
     """
 
     @overrides
-    def tokenize(self, text: Lits[str]) -> List[Token]:
+    def tokenize(self, text: List[str]) -> List[Token]:
         return [Token(t) for t in text]
