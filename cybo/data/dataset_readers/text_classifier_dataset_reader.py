@@ -17,6 +17,7 @@ from collections import Iterator
 
 from cybo.data.dataset_readers.dataset_reader import DatasetReader
 from cybo.data.fields.text_field import TextField
+from cybo.data.fields.field import Field
 
 
 class TextClassifierDatasetReader(DatasetReader):
