@@ -11,24 +11,32 @@
 
 
 '''
-from typing import Dict
+import tensorflow as tf
+from typing import Dict, List, Optional
 import pandas as pd
 from collections import Iterator
 
-from cybo.data.dataset_readers.dataset_reader import DatasetReader
+from cybo.data.dataset_readers.dataset_reader import DatasetReader, InputFeatures
 from cybo.data.fields.text_field import TextField
 from cybo.data.fields.field import Field
+from cybo.data.instance import Instance
+from cybo.data.vocabulary import Vocabulary
+
+
+class TextClassifierInputFeatures(InputFeatures):
+    input_ids: List[int]
+    label_ids: Optional[List[int]]
 
 
 class TextClassifierDatasetReader(DatasetReader):
     """
     文本分类 dataset_reader
-    用于读取 text, label  
+    用于读取 text, label
     (csv格式文件)
     """
 
-    def __init__(self, tokenizer, token_indexer, max_seq_len):
-        super().__init__(tokenizer, token_indexer, max_seq_len)
+    def __init__(self, tokenizer, token_indexer):
+        super().__init__(tokenizer, token_indexer)
 
     def read_file(self, file_path) -> Iterator:
         df = pd.read_csv(file_path, encoding="utf-8")
@@ -39,13 +47,21 @@ class TextClassifierDatasetReader(DatasetReader):
         fields: Dict[str, Field] = {}
         text, label = inputs
         tokens = self._tokenizer(text)
-        if self._max_seq_len:
-            self._truncated(tokens)
         fields["tokens"] = TextField(tokens, self._token_indexer)
 
-        return {"text": text}
+        return Instance(fields)
 
     def _truncated(self, tokens):
         if len(tokens) > self._max_seq_len:
             tokens = tokens[:self._max_seq_len]
         return tokens
+
+    def convert_instances_to_features(
+            self, instances: List[Instance],
+            vocab: Vocabulary) -> List[TextClassifierInputFeatures]:
+        features = []
+        for instance in instances:
+            instance.index_fields(vocab=vocab)
+
+            input_ids = instance["tokens"].indexd_tokens
+            print(input_ids)

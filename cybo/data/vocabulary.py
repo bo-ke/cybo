@@ -11,8 +11,8 @@
 
 
 '''
-from typing import Dict, List
-from collections import Iterable, defaultdict
+from typing import Dict, List, Callable, Any, Set, Iterable
+from collections import defaultdict
 
 DEFAULT_NON_PADDED_NAMESPACES = ("tags", "labels")
 DEFAULT_PADDING_TOKEN = "@@PADDING@@"
@@ -20,10 +20,12 @@ DEFAULT_OOV_TOKEN = "@@UNKNOWN@@"
 
 
 class _NamespaceDependentDefaultDict(defaultdict):
-    def __init__(self,
-                 non_padded_namespaces: Iterable[str],
-                 padded_function: Callable[[], Any],
-                 non_padded_function: Callable[[], Any]):
+    def __init__(
+        self,
+        non_padded_namespaces: Iterable[str],
+        padded_function: Callable[[], Any],
+        non_padded_function: Callable[[], Any],
+    ) -> None:
         """生成默认vocabulary dict
 
         Args:
@@ -62,8 +64,10 @@ class _TokenToIndexDefaultDict(_NamespaceDependentDefaultDict):
     """
 
     def __init__(self, non_padded_namespaces, padding_token, oov_token):
-        super().__init__(non_padded_namespaces=non_padded_namespaces, padded_function=lambda: {
-            padding_token: 0, oov_token: 1}, non_padded_function=lambda: {})
+        super().__init__(
+            non_padded_namespaces=non_padded_namespaces,
+            padded_function=lambda: {padding_token: 0, oov_token: 1},
+            non_padded_function=lambda: {})
 
 
 class _IndexToTokenDefaultDict(_NamespaceDependentDefaultDict):
@@ -71,17 +75,19 @@ class _IndexToTokenDefaultDict(_NamespaceDependentDefaultDict):
     """
 
     def __init__(self, non_padded_namespaces, padding_token, oov_token):
-        super().__init__(non_padded_namespaces=non_padded_namespaces, padded_function=lambda: {
-            0: padding_token, 1: oov_token}, non_padded_function=lambda: {})
+        super().__init__(
+            non_padded_namespaces=non_padded_namespaces,
+            padded_function=lambda: {0: padding_token, 1: oov_token},
+            non_padded_function=lambda: {})
 
 
 class Vocabulary():
-    def __init__(self,
-                 counter: Dict[str, Dict[str, int]] = None,
-                 min_count: Dict[str, int] = None,
-                 non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
-                 padding_token: str = DEFAULT_PADDING_TOKEN,
-                 oov_token: str = DEFAULT_OOV_TOKEN):
+    def __init__(
+            self, counter: Dict[str, Dict[str, int]] = None,
+            min_count: Dict[str, int] = None,
+            non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
+            padding_token: str = DEFAULT_PADDING_TOKEN,
+            oov_token: str = DEFAULT_OOV_TOKEN):
 
         self._non_padded_namespaces = non_padded_namespaces
         self._padding_token = padding_token
@@ -97,13 +103,15 @@ class Vocabulary():
         )
 
         # 往默认token_to_index dict与index_to_token dict中填充数据
-        self._extend()
+        self._extend(counter=counter,
+                     min_count=min_count,
+                     non_padded_namespaces=non_padded_namespaces)
 
-    def _extend(self,
-                counter: Dict[str, Dict[str, int]],
-                min_count: Dict[str, int] = None,
-                non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
-                tokens_to_add: Dict[str, List[str]] = None):
+    def _extend(
+            self, counter: Dict[str, Dict[str, int]],
+            min_count: Dict[str, int] = None,
+            non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
+            tokens_to_add: Dict[str, List[str]] = None):
         """往vocab中添加元素
 
         Args:
@@ -159,7 +167,7 @@ class Vocabulary():
         """
         return len(self._token_to_index[namespace])
 
-    def get_token_index(self, token: str, namespace: str="tokens") -> int:
+    def get_token_index(self, token: str, namespace: str = "tokens") -> int:
         """获取token index
 
         Args:
@@ -170,4 +178,3 @@ class Vocabulary():
             int: 返回的index
         """
         return self._token_to_index[namespace].get(token, self._oov_token)
-        
