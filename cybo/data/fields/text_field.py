@@ -23,7 +23,9 @@ TextFieldTensors = Dict[str, Dict[str, tf.Tensor]]
 
 
 class TextField(SequenceField[TextFieldTensors]):
-    def __init__(self, tokens: List[Token], token_indexer: TokenIndexer) -> None:
+    def __init__(
+            self, tokens: List[Token],
+            token_indexer: TokenIndexer) -> None:
         self.tokens = tokens
         self._token_indexer = token_indexer
         self.indexed_tokens = None
@@ -35,6 +37,5 @@ class TextField(SequenceField[TextFieldTensors]):
 
     @overrides
     def index(self, vocab):
-        self.indexed_tokens = self._token_indexer.tokens_to_indices(self.tokens, vocab)
-    
-    
+        self.indexed_tokens = self._token_indexer.tokens_to_indices(
+            self.tokens, vocab)
