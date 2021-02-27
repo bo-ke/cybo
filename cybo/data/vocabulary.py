@@ -11,7 +11,7 @@
 
 
 '''
-from typing import Dict, List, Callable, Any, Set, Iterable
+from typing import Dict, List, Callable, Iterable, Any, Set
 from collections import defaultdict
 
 DEFAULT_NON_PADDED_NAMESPACES = ("tags", "labels")
@@ -20,14 +20,11 @@ DEFAULT_OOV_TOKEN = "@@UNKNOWN@@"
 
 
 class _NamespaceDependentDefaultDict(defaultdict):
-    def __init__(
-        self,
-        non_padded_namespaces: Iterable[str],
-        padded_function: Callable[[], Any],
-        non_padded_function: Callable[[], Any],
-    ) -> None:
+    def init(self,
+             non_padded_namespaces: Iterable[str],
+             padded_function: Callable[[], Any],
+             non_padded_function: Callable[[], Any]):
         """生成默认vocabulary dict
-
         Args:
             non_padded_namespaces (Iterable[str]): 不需要做padded的namespaces 如labels、tag 不需要oov与补全标识符
             padded_function (Callable[[], Any]): 生成包含默认key的dict的函数  如lambda: {padding_token: 0, oov_token: 1}
@@ -36,22 +33,20 @@ class _NamespaceDependentDefaultDict(defaultdict):
         self._non_padded_namespaces = set(non_padded_namespaces)
         self._padded_function = padded_function
         self._non_padded_function = non_padded_function
-        super().__init__()
+        super().init()
 
-    def __missing__(self, key: str):
+    def missing(self, key: str):
         """当索引namespace无结果时，返回对应默认值
-
         Args:
             key (str): 索引namespace
-
         Returns:
             返回namespace对应的默认dict
         """
         if any(pattern == key for pattern in self._non_padded_namespaces):
             value = self._non_padded_function()
         else:
-            value = self.padded_function()
-        dict.__setitem__(self, key, value)
+            value = self._padded_function()
+        dict.setitem(self, key, value)
         return value
 
     def add_non_padded_namespaces(self, non_padded_namespaces: Set[str]):
@@ -63,8 +58,8 @@ class _TokenToIndexDefaultDict(_NamespaceDependentDefaultDict):
     """token_to_index dict: {namespace_1: {}, namespace_2: {...}}
     """
 
-    def __init__(self, non_padded_namespaces, padding_token, oov_token):
-        super().__init__(
+    def init(self, non_padded_namespaces, padding_token, oov_token):
+        super().init(
             non_padded_namespaces=non_padded_namespaces,
             padded_function=lambda: {padding_token: 0, oov_token: 1},
             non_padded_function=lambda: {})
@@ -74,15 +69,15 @@ class _IndexToTokenDefaultDict(_NamespaceDependentDefaultDict):
     """index_to_token dict: {namespace_1: {}, namespace_2: {...}}
     """
 
-    def __init__(self, non_padded_namespaces, padding_token, oov_token):
-        super().__init__(
+    def init(self, non_padded_namespaces, padding_token, oov_token):
+        super().init(
             non_padded_namespaces=non_padded_namespaces,
             padded_function=lambda: {0: padding_token, 1: oov_token},
             non_padded_function=lambda: {})
 
 
 class Vocabulary():
-    def __init__(
+    def init(
             self, counter: Dict[str, Dict[str, int]] = None,
             min_count: Dict[str, int] = None,
             non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
@@ -104,7 +99,6 @@ class Vocabulary():
 
         # 往默认token_to_index dict与index_to_token dict中填充数据
         self._extend(counter=counter,
-                     min_count=min_count,
                      non_padded_namespaces=non_padded_namespaces)
 
     def _extend(
@@ -113,7 +107,6 @@ class Vocabulary():
             non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
             tokens_to_add: Dict[str, List[str]] = None):
         """往vocab中添加元素
-
         Args:
             counter (Dict[str, Dict[str, int]]): {namespace: {$word: count, ...}, ...}
             min_count (Dict[str, int], optional): 计入vocab的namespace对应token最小count, {namespace: min_count, ...}
@@ -130,7 +123,7 @@ class Vocabulary():
         # extension_namespaces = {*counter, *tokens_to_add}
         self._token_to_index.add_non_padded_namespaces(non_padded_namespaces)
         self._index_to_token.add_non_padded_namespaces(non_padded_namespaces)
-        self._non_padded_namespaces.update(non_padded_namespaces)
+        # self._non_padded_namespaces.update(non_padded_namespaces)
         # 添加counter中元素到counter
         for namespace in counter:
             token_counters = list(counter[namespace].items())
@@ -146,7 +139,6 @@ class Vocabulary():
 
     def add_token_to_namespace(self, token, namespace):
         """往namespace dict中添加token
-
         Args:
             token ([str]): 添加的token
             namespace ([str]): token对应的namespace
@@ -158,10 +150,8 @@ class Vocabulary():
 
     def get_vocab_size(self, namespace: str = "tokens") -> int:
         """获取对应namespace的vocab_size
-
         Args:
             namespace (str, optional):
-
         Returns:
             int: vocab_size
         """
@@ -169,12 +159,25 @@ class Vocabulary():
 
     def get_token_index(self, token: str, namespace: str = "tokens") -> int:
         """获取token index
-
         Args:
             token (str): 对应的token
             namespace (str, optional): token对应的namespace. Defaults to "tokens".
-
         Returns:
             int: 返回的index
         """
         return self._token_to_index[namespace].get(token, self._oov_token)
+
+    @classmethod
+    def from_examples(
+            cls, examples, min_count: Dict[str, int] = None,
+            non_padded_namespaces: Iterable[str] = DEFAULT_NON_PADDED_NAMESPACES,
+            padding_token: str = DEFAULT_PADDING_TOKEN,
+            oov_token: str = DEFAULT_OOV_TOKEN):
+        namespace_token_counts: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int))
+
+        for example in examples:
+            example.count_vocab_items(counter=namespace_token_counts)
+        return cls(
+            counter=namespace_token_counts,
+            non_padded_namespaces=non_padded_namespaces)
