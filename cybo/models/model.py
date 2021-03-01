@@ -21,26 +21,8 @@ class Model(tf.keras.models.Model):
         super().__init__(*args, **kwargs)
 
     @tf.function()
-    def call(self, inputs, training, mask):
+    def call(self, inputs, training, mask) -> Dict:
         raise NotImplementedError
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         return {}
-
-    def update_metrics_state(self, y_true, y_pred):
-        raise NotImplementedError
-
-    def get_loss(self, y_true, y_pred):
-        raise NotImplementedError
-
-    def get_output_dict(self, **kwargs) -> Dict[str, tf.Tensor]:
-        """
-        output1 = self(input1)
-        output_dict = {"output1": output1}
-        if targets is not None:
-            # Function returning a scalar tf.Tensor, defined by the user.
-            loss = self._compute_loss(output1, output2, targets)
-            output_dict["loss"] = loss
-        return output_dict
-        """
-        return self(**kwargs)

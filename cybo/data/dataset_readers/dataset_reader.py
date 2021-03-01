@@ -14,15 +14,31 @@
 import tensorflow as tf
 from collections import Iterator
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
 from cybo.common.checks import ConfigurationError
 from cybo.data.instance import Instance
 from cybo.data.vocabulary import Vocabulary
 
 
+class InputExample(BaseModel):
+    guid: int
+    text: List[str]
+    label: str
+
+    def count_vocab_items(self, counter: Dict[str, Dict[str, int]]):
+        for token in self.text:
+            counter["text"][token] += 1
+        counter["label"][self.label] += 1
+
+
 class InputFeatures(BaseModel):
-    pass
+    input_ids: List[int]
+    label: List[int]
+
+    @classmethod
+    def return_types(cls):
+        return {"input_ids": tf.int32, "label": tf.int32}
 
 
 class DatasetReader():
@@ -56,3 +72,12 @@ class DatasetReader():
 
     def encode_plus(self, text) -> InputFeatures:
         raise NotImplementedError
+
+
+class Tokenizer():
+    def tokenize(self, text):
+        text = text.strip()
+        if not text:
+            return []
+        tokens = list(text)
+        return tokens

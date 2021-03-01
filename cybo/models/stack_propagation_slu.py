@@ -11,95 +11,76 @@
 
 
 '''
-import tensorflow as tf
-from collections import Counter
+# from collections import Counter
+# import tensorflow as tf
 
-from cybo.models.model import Model
-from cybo.layers.self_attention import SelfAttentionLayer
+# from layer import SelfAttentionLayer
+# from losses import intent_slot_loss_func
+# from metrics import IntentSlotOverallAcc, get_intent_slot_positive
 
 
-class StackPropagationSlu(Model):
+# class StackPropagationSlu(tf.keras.models.Model):
+#     def init(
+#             self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
+#             intent_size, slot_size):
+#         super().init()
+#         self.embedding = tf.keras.layers.Embedding(
+#             vocab_size, embedding_dim, mask_zero=True)
+#         self.bi_lstm = tf.keras.layers.Bidirectional(
+#             tf.keras.layers.LSTM(hidden_dim, return_sequences=True))
+#         self.attention_layer = SelfAttentionLayer(
+#             hidden_dim=1024, output_dim=128,
+#             dropout_rate=dropout_rate)
+#         self.dropout1 = tf.keras.layers.Dropout(rate=dropout_rate)
 
-    def __init__(
-            self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
-            intent_size, slot_size):
-        super().__init__()
-        self.embedding = tf.keras.layers.Embedding(
-            vocab_size, embedding_dim, mask_zero=True)
-        self.bi_lstm = tf.keras.layers.Bidirectional(
-            tf.keras.layers.LSTM(hidden_dim, return_sequences=True))
-        self.attention_layer = SelfAttentionLayer(
-            hidden_dim=1024, output_dim=128,
-            dropout_rate=dropout_rate)
-        self.dropout1 = tf.keras.layers.Dropout(rate=dropout_rate)
+#         self.concat = tf.keras.layers.Concatenate()
 
-        self.concat = tf.keras.layers.Concatenate()
+#         self.intent_decoder_layer = tf.keras.layers.LSTM(
+#             units=64, return_sequences=True)
+#         self.slot_decoder_layer = tf.keras.layers.LSTM(
+#             units=64, return_sequences=True)
 
-        self.intent_decoder_layer = tf.keras.layers.LSTM(
-            units=64, return_sequences=True)
-        self.slot_decoder_layer = tf.keras.layers.LSTM(
-            units=64, return_sequences=True)
+#         self.intent_output_layer = tf.keras.layers.Dense(
+#             units=intent_size, activation="softmax")
+#         self.slot_output_layer = tf.keras.layers.Dense(
+#             units=slot_size, activation="softmax")
 
-        self.intent_output_layer = tf.keras.layers.Dense(
-            units=intent_size, activation="softmax")
-        self.slot_output_layer = tf.keras.layers.Dense(
-            units=slot_size, activation="softmax")
+#         self.acc = IntentSlotOverallAcc()
 
-        # self.acc = IntentSlotOverallAcc()
+#     def call(self, input_ids, intent_ids=None, tags_ids=None, mask=None,
+#              training=True):
+#         x = self.embedding(input_ids)    # (b, s, e)
+#         x = self.dropout1(x, training=training)
+#         h = self.bi_lstm(x)      # (b, s, 2e)
+#         c = self.attention_layer(h)   # (b, s, 2e)
+#         e = self.concat([h, c])
+#         h_intent = self.intent_decoder_layer(e)  # (b, s, e)
+#         y_intent = self.intent_output_layer(h_intent)  # (b, s, intent_size)
 
-    @tf.function()
-    def call(self, inputs, mask=None, training=True):
-        x = inputs
-        x = self.embedding(x)    # (b, s, e)
-        x = self.dropout1(x, training=training)
-        h = self.bi_lstm(x)      # (b, s, 2*e)
+#         h_slot = self.slot_decoder_layer(
+#             self.concat([y_intent, e]))  # (b, s, (intent_size+4*e))
+#         y_slot = self.slot_output_layer(h_slot)   # (b, s, slot_size)
+#         output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
+#         if intent_ids is not None and tags_ids is not None:
+#             y_true = {"intent": intent_ids, "tags": tags_ids}
+#             y_pred = {"intent_logits": y_intent, "slot_logits": y_slot}
+#             loss = intent_slot_loss_func(y_true=y_true, y_pred=y_pred)
+#             output_dict["loss"] = loss
+#             self.acc.update_state(y_true=y_true, y_pred=y_pred)
+#             # get_intent_slot_positive(y_true=y_true, y_pred=y_pred)
+#         return output_dict
 
-        # attention_mask = tf.cast((1 - mask), tf.float32)  # (b, s)
-        # # attention_mask = tf.cast(tf.math.equal(inputs, 0), tf.float32)
-        # attention_mask = attention_mask[:, tf.newaxis, :]  # (b, 1, s)
-        c = self.attention_layer(h)   # (b, s, 2*e)
-        # e = tf.concat(values=[h, c], axis=-1)  # (b, s, 3*e)
-        e = self.concat([h, c])
-        # print(c._keras_mask)
-        # print(e._keras_mask)
-        h_intent = self.intent_decoder_layer(e)  # (b, s, e)
-        y_intent = self.intent_output_layer(h_intent)  # (b, s, intent_size)
+#     def get_metrics(self, reset: bool = False):
+#         metrics_to_return = {"intent_acc": self.acc.result()[0].numpy(),
+#                              "slot_acc": self.acc.result()[1].numpy(),
+#                              "overall_acc": self.acc.result()[2].numpy()}
+#         if reset:
+#             self.acc.reset_states()
+#         return metrics_to_return
 
-        h_slot = self.slot_decoder_layer(
-            self.concat([y_intent, e]))  # (b, s, (intent_size+4*e))
-        y_slot = self.slot_output_layer(h_slot)   # (b, s, slot_size)
-        # print(y_slot._keras_mask)
-        return {"intent": y_intent, "tag": y_slot}
-
-    @ classmethod
-    def custom_predict(cls, *args, **kwargs):
-        y_intent, y_slot = cls(*args, **kwargs)
-        o_intent = tf.argmax(y_intent, axis=-1)
-        # 取token_level_intent most_common 作为query intent
-        #  Counter.most_common() 返回一个list，.eg:[(2, 3)]
-        o_intent = [Counter(i.numpy()).most_common(1)[0][0] for i in o_intent]
-
-        o_slot = tf.argmax(y_slot, axis=-1)
-        return o_intent, o_slot
-
-    def get_metrics(self, reset: bool = False):
-        metrics_to_return = {"intent_acc": self.acc.result()[0].numpy(),
-                             "slot_acc": self.acc.result()[1].numpy(),
-                             "overall_acc": self.acc.result()[2].numpy()}
-        if reset:
-            self.acc.reset_states()
-        return metrics_to_return
-
-    def update_metrics_state(self, y_true, y_pred):
-        self.acc.update_state(y_true=y_true, y_pred=y_pred)
-
-    def get_loss(self, y_true, y_pred):
-        # return intent_slot_loss_func(y_pred=y_pred, y_true=y_true)
-        pass
-
-    @classmethod
-    def extend_pre_config(cls):
-        model_config = {
-            "embedding_dim": 200
-        }
-        return cls(**model_config)
+#     @classmethod
+#     def extend_pre_config(cls):
+#         model_config = {
+#             "embedding_dim": 200
+#         }
+#         return cls(**model_config)

@@ -1,36 +1,32 @@
-# -*- coding: utf-8 -*-
-'''
-@author: kebo
-@contact: kebo0912@outlook.com
-
-@version: 1.0
-@file: trainer.py
-@time: 2021/02/06 23:51:18
-
-这一行开始写关于本文件的说明与解释
-
-
-'''
 import tensorflow as tf
 
-
+from cybo_dataloader import Dataloader
 from cybo.models.model import Model
-from cybo.training.utils import evaluate
-from cybo.data.dataloader import Dataloader
 
 
-class Trainer:
-    def __init__(self,
-                 model: Model,
-                 training_dataloader: Dataloader,
-                 validation_dataloader: Dataloader,
-                 optimizer: tf.keras.optimizers.Optimizer,
-                 epochs: int,
-                 checkpoint_path: str,
-                 patience: int = None,
-                 save_weights_only: bool = True,
-                 monitor: str = "overall_acc"
-                 ) -> None:
+def evaluate(model, dataloader):
+    loss_metric = tf.keras.metrics.Mean(name="loss")
+    model.get_metrics(reset=True)
+    for batch in dataloader:
+        output_dict = model(**batch, training=False)
+        loss_metric.update_state(output_dict["loss"])
+    metrics_to_return = model.get_metrics()
+    metrics_to_return["loss"] = loss_metric.result().numpy()
+    return metrics_to_return
+
+
+class Trainer():
+    def init(self,
+             model: Model,
+             training_dataloader: Dataloader,
+             optimizer: tf.keras.optimizers.Optimizer,
+             epochs: int,
+             checkpoint_path: str,
+             validation_dataloader: Dataloader = None,
+             patience: int = None,
+             save_weights_only: bool = True,
+             monitor: str = "overall_acc"
+             ) -> None:
 
         self.model = model
         self.training_dataloader = training_dataloader
@@ -68,9 +64,8 @@ class Trainer:
                 stateful_metrics=["loss"] + list(metrics.keys()))
 
             log_values = []
-            for x, y in self.training_dataloader:
-                y_pred = self.train_step(x, y)
-                self.model.update_metrics_state(y, y_pred)
+            for batch in self.training_dataloader:
+                self.train_step(batch)
                 log_values.append(("loss", self.loss_metric.result().numpy()))
                 log_values.extend([(k, v)
                                    for k, v in self.model.get_metrics().items()])
@@ -87,13 +82,14 @@ class Trainer:
             else:
                 tf.print(f"validation {self.monitor} is not improved")
 
-    @tf.function()
-    def train_step(self, x, y):
+    # @tf.function()
+    def train_step(self, batch):
         with tf.GradientTape() as tape:
-            y_pred = self.model(**x, training=True)
-            loss = self.model.get_loss(y, y_pred)
-        gradients = tape.gradient(loss, self.model.trainable_variables)
+            output_dict = self.model(**batch, training=True)
+        gradients = tape.gradient(
+            output_dict["loss"],
+            self.model.trainable_variables)
         self.optimizer.apply_gradients(
             zip(gradients, self.model.trainable_variables))
-        self.loss_metric.update_state(loss)
-        return y_pred
+        self.loss_metric.update_state(output_dict["loss"])
+        # return output_dict
