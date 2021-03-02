@@ -21,8 +21,8 @@ from cybo.data.dataset_readers.dataset_reader import InputFeatures
 
 
 class Dataloader():
-    def init(self, dataset: tf.data.Dataset, dataset_size: int,
-             batch_size: int):
+    def __init__(self, dataset: tf.data.Dataset, dataset_size: int,
+                 batch_size: int):
         self._dataset = dataset
         self._dataset_size = dataset_size
         self._batch_size = batch_size
