@@ -13,8 +13,6 @@
 '''
 from typing import List, Optional
 
-from cybo import logger
-
 
 class Tokenizer():
     def batch_tokenizer(self, texts: List[str]):
