@@ -36,7 +36,7 @@ class SluInputExample(BaseModel):
             counter["tags"][tag] += 1
 
 
-class InputFeatures(BaseModel):
+class SluInputFeatures(BaseModel):
     input_ids: List[int]
     intent_ids: Optional[List[int]]
     tags_ids: Optional[List[int]]
@@ -115,7 +115,7 @@ class SluDatasetReader():
                 input_ids, max_seq_length=max_seq_length)
             tags_ids = self._truncated_add_padded(
                 tags_ids, max_seq_length=max_seq_length)
-            feature = InputFeatures(
+            feature = SluInputFeatures(
                 input_ids=input_ids, intent_ids=intent_ids,
                 tags_ids=tags_ids)
             # if return_generator:
@@ -137,4 +137,4 @@ class SluDatasetReader():
 
     @property
     def return_types(self):
-        return InputFeatures.return_types()
+        return SluInputFeatures.return_types()

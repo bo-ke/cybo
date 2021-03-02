@@ -11,14 +11,15 @@
 
 
 '''
+import json
 import tensorflow as tf
 from collections import Iterator
 from pydantic import BaseModel
 from typing import List, Dict
 
 from cybo.common.checks import ConfigurationError
-from cybo.data.instance import Instance
 from cybo.data.vocabulary import Vocabulary
+from cybo.data.tokenizers import Tokenizer
 
 
 class InputExample(BaseModel):
@@ -42,42 +43,33 @@ class InputFeatures(BaseModel):
 
 
 class DatasetReader():
-    """
-    dataset_reader 基类
-    """
+    def init(self, tokenizer: Tokenizer) -> None:
+        self.tokenizer = tokenizer
 
-    def __init__(self, tokenizer, token_indexer):
-        self._tokenizer = tokenizer
-        self._token_indexer = token_indexer
-
-    def read(self, file_path: str) -> List[Instance]:
-        text_iterator = self.read_file(file_path=file_path)
-        instances = [self.text_to_instance(text) for text in text_iterator]
-        if not instances:
-            raise ConfigurationError(
-                "No instances were read from the given filepath {}. "
-                "Is the path correct?".format(file_path))
-        return instances
-
-    def read_file(self, file_path: str) -> Iterator:
+    def get_examples(self, data_filepath) -> List[InputExample]:
         raise NotImplementedError
 
-    def text_to_instance(self, inputs) -> Instance:
+    @classmethod
+    def _read_file(cls, filepath):
+        lines = open(filepath, "r", encoding="utf-8").readlines()
+        return lines
+
+    def convert_examples_to_features(
+            self, examples: List[InputExample],
+            vocab: Vocabulary, max_seq_length: int = 32):
         raise NotImplementedError
 
-    def convert_instances_to_features(
-            self, instances: List[Instance],
-            vocab: Vocabulary) -> List[InputFeatures]:
+    def encode_plus(self, text, *args, **kwargs) -> Dict:
         raise NotImplementedError
 
-    def encode_plus(self, text) -> InputFeatures:
-        raise NotImplementedError
-
-
-class Tokenizer():
-    def tokenize(self, text):
-        text = text.strip()
-        if not text:
-            return []
-        tokens = list(text)
+    @classmethod
+    def _truncated_add_padded(cls, tokens, max_seq_length, padding_token=0):
+        if len(tokens) > max_seq_length:
+            tokens = tokens[:max_seq_length]
+        else:
+            tokens = tokens + [padding_token] * (max_seq_length - len(tokens))
         return tokens
+
+    @property
+    def return_types(self):
+        return InputFeatures.return_types()
