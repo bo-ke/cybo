@@ -16,17 +16,17 @@ def evaluate(model, dataloader):
 
 
 class Trainer():
-    def init(self,
-             model: Model,
-             training_dataloader: Dataloader,
-             optimizer: tf.keras.optimizers.Optimizer,
-             epochs: int,
-             checkpoint_path: str,
-             validation_dataloader: Dataloader = None,
-             patience: int = None,
-             save_weights_only: bool = True,
-             monitor: str = "overall_acc"
-             ) -> None:
+    def __init__(self,
+                 model: Model,
+                 training_dataloader: Dataloader,
+                 optimizer: tf.keras.optimizers.Optimizer,
+                 epochs: int,
+                 checkpoint_path: str,
+                 validation_dataloader: Dataloader = None,
+                 patience: int = None,
+                 save_weights_only: bool = True,
+                 monitor: str = "overall_acc"
+                 ) -> None:
 
         self.model = model
         self.training_dataloader = training_dataloader
