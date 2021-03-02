@@ -1,11 +1,25 @@
-import tensorflow as tf
-from cybo_dataloader import Dataloader
-from cybo_vocabulary import Vocabulary
-from cybo_model import StackPropagationSlu
-from intent_slot_dataset_reader import IntentSlotDatasetReader, Tokenizer
-from cybo_trainer import Trainer
+# -*- coding: utf-8 -*-
+'''
+@author: kebo
+@contact: kebo0912@outlook.com
 
-dataset_reader = IntentSlotDatasetReader(tokenizer=Tokenizer())
+@version: 1.0
+@file: demo.py
+@time: 2021/03/02 21:19:27
+
+这一行开始写关于本文件的说明与解释
+
+
+'''
+
+import tensorflow as tf
+from cybo.data.dataloader import Dataloader
+from cybo.data.vocabulary import Vocabulary
+from cybo.models.stack_propagation_slu import StackPropagationSlu
+from cybo.data.dataset_readers.slu_dataset_reader import SluDatasetReader, Tokenizer
+from cybo.training.trainer import Trainer
+
+dataset_reader = SluDatasetReader(tokenizer=Tokenizer())
 examples = dataset_reader.get_examples(
     data_filepath="./data/map/map_first_part.csv")
 print(examples[0])
