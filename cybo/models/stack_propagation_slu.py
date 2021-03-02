@@ -20,10 +20,10 @@
 
 
 # class StackPropagationSlu(tf.keras.models.Model):
-#     def init(
+#     def __init__(
 #             self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
 #             intent_size, slot_size):
-#         super().init()
+#         super().__init__()
 #         self.embedding = tf.keras.layers.Embedding(
 #             vocab_size, embedding_dim, mask_zero=True)
 #         self.bi_lstm = tf.keras.layers.Bidirectional(
