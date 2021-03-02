@@ -17,6 +17,7 @@ from collections import Iterator
 from pydantic import BaseModel
 from typing import List, Dict
 
+from cybo.common.logger import logger
 from cybo.common.checks import ConfigurationError
 from cybo.data.vocabulary import Vocabulary
 from cybo.data.tokenizers import Tokenizer
@@ -24,39 +25,57 @@ from cybo.data.tokenizers import Tokenizer
 
 class InputExample(BaseModel):
     guid: int
-    text: List[str]
-    label: str
 
     def count_vocab_items(self, counter: Dict[str, Dict[str, int]]):
-        for token in self.text:
-            counter["text"][token] += 1
-        counter["label"][self.label] += 1
+        # for token in self.text:
+        #     counter["text"][token] += 1
+        # counter["label"][self.label] += 1
+        raise NotImplementedError
 
 
 class InputFeatures(BaseModel):
     input_ids: List[int]
-    label: List[int]
 
     @classmethod
     def return_types(cls):
-        return {"input_ids": tf.int32, "label": tf.int32}
+        # return {"input_ids": tf.int32, "label": tf.int32}
+        raise NotImplementedError
 
 
 class DatasetReader():
-    def init(self, tokenizer: Tokenizer) -> None:
-        self.tokenizer = tokenizer
+    def __init__(self, tokenizer: Tokenizer = None) -> None:
+        self._tokenizer = tokenizer
 
-    def get_examples(self, data_filepath) -> List[InputExample]:
+    def get_examples(self, filepath) -> List[InputExample]:
         raise NotImplementedError
 
     @classmethod
-    def _read_file(cls, filepath):
+    def read_file(cls, filepath):
         lines = open(filepath, "r", encoding="utf-8").readlines()
         return lines
 
     def convert_examples_to_features(
             self, examples: List[InputExample],
-            vocab: Vocabulary, max_seq_length: int = 32):
+            vocab: Vocabulary, max_seq_length: int = 32,
+            verbose: bool = False):
+        features = []
+        for (ex_index, example) in enumerate(examples):
+            features_item = self._convert_example_to_features(
+                example, vocab, max_seq_length)
+            if verbose:
+                if ex_index <= 5:
+                    print("*** Example ** *")
+                    for k, v in example.dict().items():
+                        print(f"{k}: {v}")
+                    print("*** Features ** *")
+                    for k, v in features_item.dict().items():
+                        print(f"{k}: {v}")
+            features.append(features_item)
+        return features
+
+    def _convert_example_to_features(
+            self, examples: List[InputExample],
+            vocab: Vocabulary, max_seq_length: int = 32) -> InputFeatures:
         raise NotImplementedError
 
     def encode_plus(self, text, *args, **kwargs) -> Dict:
@@ -72,4 +91,6 @@ class DatasetReader():
 
     @property
     def return_types(self):
+        # todo
+        # 用于dataloader from generator 手动传入return_types
         return InputFeatures.return_types()
