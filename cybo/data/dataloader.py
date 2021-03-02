@@ -11,50 +11,56 @@
 
 
 '''
+from typing import List, Dict
 import tensorflow as tf
 import numpy as np
+from collections import defaultdict
 
 from cybo.data.vocabulary import Vocabulary
+from cybo.data.dataset_readers.dataset_reader import InputFeatures
 
 
 class Dataloader():
-    def __init__(self, instances, vocab: Vocabulary, batch_size,
-                 max_seq_length):
-        self.instances = instances
-        self.vocab = vocab
-        self.max_seq_length = max_seq_length
-        self.batch_size = batch_size
-        self.dataset = self._gen_dataset()
+    def init(self, dataset: tf.data.Dataset, dataset_size: int,
+             batch_size: int):
+        self._dataset = dataset
+        self._dataset_size = dataset_size
+        self._batch_size = batch_size
 
-    def _data_generator(self):
-        for instance in self.instances:
-            text = self.vocab.encode(
-                instance["text"],
-                namespace="text", padding=True,
-                padding_length=self.max_seq_length)
-            mask = np.zeros(self.max_seq_length)
-            mask[:len(instance["text"])] = 1
-            intent = self.vocab.encode(
-                [instance["intent"]] * len(instance["text"]),
-                namespace="intent", padding=True,
-                padding_length=self.max_seq_length)
-            tag = self.vocab.encode(
-                instance["tag"],
-                namespace="tag", padding=True,
-                padding_length=self.max_seq_length)
-            # print({"text": text, "mask": mask, "intent": intent, "tag": tag})
-            yield {"inputs": text, "mask": mask}, {"intent": intent, "tag": tag}
+    @classmethod
+    def from_features(cls, features: List[InputFeatures], batch_size: int):
+        features_dict_data = defaultdict(list)
+        for feature in features:
+            for namespace, ids in feature.dict(exclude_unset=True).items():
+                features_dict_data[namespace].append(ids)
+        features_slice_data = dict(features_dict_data)
+        dataset = tf.data.Dataset.from_tensor_slices(features_slice_data)
+        return cls(
+            dataset=dataset, dataset_size=len(features),
+            batch_size=batch_size)
 
-    def _gen_dataset(self):
-        dataset = tf.data.Dataset.from_generator(self._data_generator, output_types=(
-            {"inputs": tf.int32, "mask": tf.int32}, {"intent": tf.int32, "tag": tf.int32}))
-        return dataset
+    @classmethod
+    def from_features_generator(
+            cls, features_generator, generator_size: int, output_types: Dict,
+            batch_size: int):
+        dataset = tf.data.Dataset.from_generator(
+            lambda: features_generator, output_types=(output_types))
+        return cls(
+            dataset=dataset, dataset_size=generator_size,
+            batch_size=batch_size)
 
-    def __iter__(self):
-        dataset = self.dataset.batch(self.batch_size, drop_remainder=False)
+    def iter(self):
+        dataset = self._dataset.batch(self._batch_size, drop_remainder=False)
         dataset = dataset.prefetch(1)
-        for x, y in dataset:
-            yield x, y
+        for batch in dataset:
+            yield batch
 
-    def __len__(self):
-        return len(self.instances)
+    def len(self):
+        # return tf.data.experimental.cardinality(self._dataset)
+        # 在dataset为generator时候，或tfRecord等情况 不支持，generator情况下返回 -2...
+        # refer:  https://github.com/tensorflow/tensorflow/issues/26966
+        return self._dataset_size
+
+    @property
+    def batch_size(self):
+        return self._batch_size

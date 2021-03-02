@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from cybo_dataloader import Dataloader
+from cybo.data.dataloader import Dataloader
 from cybo.models.model import Model
 
 
