@@ -166,7 +166,10 @@ class Vocabulary():
         Returns:
             int: 返回的index
         """
-        return self._token_to_index[namespace].get(token, self._oov_token)
+        try:
+            return self._token_to_index[namespace][token]
+        except KeyError:
+            return self._token_to_index[namespace][self._oov_token]
 
     @classmethod
     def from_examples(
