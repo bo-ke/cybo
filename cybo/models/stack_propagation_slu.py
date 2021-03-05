@@ -47,6 +47,7 @@ class StackPropagationSlu(tf.keras.models.Model):
 
         self.acc = SluOverallAcc()
 
+    @tf.function()
     def call(self, input_ids, intent_ids=None, tags_ids=None, mask=None,
              training=True):
         x = self.embedding(input_ids)    # (b, s, e)

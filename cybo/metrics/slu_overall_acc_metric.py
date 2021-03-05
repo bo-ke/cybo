@@ -49,9 +49,9 @@ class SluOverallAcc(tf.keras.metrics.Metric):
             _y, _idx, _count = tf.unique_with_counts(_intent)
             _intent = _y[tf.argmax(_count)]
             return [_intent]
-        o_intent = tf.convert_to_tensor([
-            get_max_count_intent(o_intent[i][: seq_length[i]]
-                                 for i in range(len(seq_length)))])
+        o_intent = tf.convert_to_tensor(
+            [get_max_count_intent(o_intent[i][: seq_length[i]])
+             for i in range(len(seq_length))])
         # tf.print(o_intent)
         o_slot = tf.cast(tf.argmax(slot_pred, axis=-1), dtype=tf.int32)
 

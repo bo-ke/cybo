@@ -13,6 +13,7 @@
 '''
 import tensorflow as tf
 from typing import List, Optional, Dict, Iterable
+from tqdm import tqdm
 
 from cybo.data.tokenizers.tokenizer import Tokenizer
 from cybo.data.vocabulary import Vocabulary
@@ -50,7 +51,7 @@ class SluDatasetReader(DatasetReader):
     def get_examples(self, filepath) -> List[SluInputExample]:
         lines = self.read_file(filepath=filepath)
         examples = []
-        for (i, line) in enumerate(lines):
+        for (i, line) in tqdm(enumerate(lines), desc=f"get examples from file: {filepath}"):
             examples.append(
                 SluInputExample(
                     guid=i, intent=line["intent"][0],
@@ -64,11 +65,12 @@ class SluDatasetReader(DatasetReader):
         text = []
         tags = []
         for line in open(filepath, "r"):
-            items = line.strip().split(" ", 1)
-            if not items:
+            line = line.strip()
+            if not line:
                 text = []
                 tags = []
                 continue
+            items = line.strip().split(" ", 1)
             if len(items) > 1:
                 token, tag = items
                 text.append(token)

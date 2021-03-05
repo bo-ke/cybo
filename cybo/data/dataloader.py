@@ -49,13 +49,13 @@ class Dataloader():
             dataset=dataset, dataset_size=generator_size,
             batch_size=batch_size)
 
-    def iter(self):
+    def __iter__(self):
         dataset = self._dataset.batch(self._batch_size, drop_remainder=False)
         dataset = dataset.prefetch(1)
         for batch in dataset:
             yield batch
 
-    def len(self):
+    def __len__(self):
         # return tf.data.experimental.cardinality(self._dataset)
         # 在dataset为generator时候，或tfRecord等情况 不支持，generator情况下返回 -2...
         # refer:  https://github.com/tensorflow/tensorflow/issues/26966

@@ -1,6 +1,7 @@
 #tmp
 dataset/
 test.py
+output_*
 
 # vdcode
 .vscode
