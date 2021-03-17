@@ -64,7 +64,7 @@ class SluDatasetReader(DatasetReader):
         lines = []
         text = []
         tags = []
-        for line in open(filepath, "r"):
+        for line in open(filepath, "r", encoding="utf-8"):
             line = line.strip()
             if not line:
                 text = []
