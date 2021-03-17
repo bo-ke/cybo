@@ -16,7 +16,7 @@ import tensorflow as tf
 
 from cybo.layers.self_attention import SelfAttentionLayer
 from cybo.losses.slu_loss import slu_loss_func
-from cybo.metrics.slu_overall_acc_metric import SluOverallAcc
+from cybo.metrics.slu_overall_acc_metric import SluTokenLevelIntentOverallAcc
 
 
 class StackPropagationSlu(tf.keras.models.Model):
@@ -45,7 +45,7 @@ class StackPropagationSlu(tf.keras.models.Model):
         self.slot_output_layer = tf.keras.layers.Dense(
             units=slot_size, activation="softmax")
 
-        self.acc = SluOverallAcc()
+        self.acc = SluTokenLevelIntentOverallAcc()
 
     @tf.function()
     def call(self, input_ids, intent_ids=None, tags_ids=None, mask=None,
@@ -63,8 +63,8 @@ class StackPropagationSlu(tf.keras.models.Model):
         y_slot = self.slot_output_layer(h_slot)   # (b, s, slot_size)
         output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
         if intent_ids is not None and tags_ids is not None:
-            y_true = {"intent": intent_ids, "tags": tags_ids}
-            y_pred = {"intent_logits": y_intent, "slot_logits": y_slot}
+            y_true = [intent_ids, tags_ids]
+            y_pred = [y_intent, y_slot]
             loss = slu_loss_func(y_true=y_true, y_pred=y_pred)
             output_dict["loss"] = loss
             self.acc.update_state(y_true=y_true, y_pred=y_pred)

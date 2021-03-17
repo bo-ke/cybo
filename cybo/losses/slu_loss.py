@@ -16,8 +16,8 @@ import tensorflow as tf
 
 
 def slu_loss_func(y_true: Dict, y_pred: Dict):
-    intent_true, slot_true = y_true.values()
-    intent_pred, slot_pred = y_pred.values()
+    intent_true, slot_true = y_true
+    intent_pred, slot_pred = y_pred
 
     mask = tf.cast(tf.math.not_equal(slot_true, 0), tf.float32)  # (b, s)
     mask = tf.expand_dims(mask, axis=-1)  # (b, s, 1)
