@@ -77,7 +77,7 @@ class Trainer():
             if evaluate_metrics.get(self.monitor, 1.0) >= best_acc:
                 ckpt_save_path = ckpt_manager.save()
                 tf.print(
-                    f"Saving checkpoint for epoch {epoch+1} at {ckpt_save_path}")
+                    f"Saving checkpoint for epoch {epoch} at {ckpt_save_path}")
                 best_acc = evaluate_metrics.get(self.monitor, 1.0)
             else:
                 tf.print(f"validation {self.monitor} is not improved")
