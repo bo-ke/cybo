@@ -35,7 +35,7 @@ test_examples = dataset_reader.get_examples(
 
 vocab = Vocabulary.from_examples(
     examples=training_examples + validation_examples + test_examples,
-    non_padded_namespaces=["intent"])
+    non_padded_namespaces=["intent", "tags"])
 
 training_features = dataset_reader.convert_examples_to_features(
     examples=training_examples, vocab=vocab, max_seq_length=32, verbose=True)

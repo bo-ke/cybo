@@ -93,7 +93,7 @@ class SluDatasetReader(DatasetReader):
         input_ids = self._truncated_add_padded(
             input_ids, max_seq_length=max_seq_length)
         tags_ids = self._truncated_add_padded(
-            tags_ids, max_seq_length=max_seq_length)
+            tags_ids, max_seq_length=max_seq_length, padding_token=-100)
         return SluInputFeatures(
             input_ids=input_ids, intent_ids=intent_ids,
             tags_ids=tags_ids)
