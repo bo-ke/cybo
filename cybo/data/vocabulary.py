@@ -11,13 +11,17 @@
 
 
 '''
-from typing import Dict, List, Callable, Iterable, Any, Set
+import os
+from typing import Dict, List, Callable, Iterable, Any, Set, Optional, Union
 from collections import defaultdict
 from tqdm import tqdm
+
+from loguru import logger
 
 DEFAULT_NON_PADDED_NAMESPACES = ("tags", "labels")
 DEFAULT_PADDING_TOKEN = "@@PADDING@@"
 DEFAULT_OOV_TOKEN = "@@UNKNOWN@@"
+NAMESPACE_PADDING_FILE = "non_padded_namespaces.txt"
 
 
 class _NamespaceDependentDefaultDict(defaultdict):
@@ -188,3 +192,72 @@ class Vocabulary():
             non_padded_namespaces=non_padded_namespaces,
             padding_token=padding_token,
             oov_token=oov_token)
+
+    def save_to_files(self, directory: str) -> None:
+        os.makedirs(directory, exist_ok=True)
+        if os.listdir(directory):
+            logger.warning(
+                f"vocabulary serialization directory {directory} is not empty")
+        with open(os.path.join(directory, NAMESPACE_PADDING_FILE), "w", encoding="utf-8") as namespace_file:
+            for namespace_str in self._non_padded_namespaces:
+                print(namespace_str, file=namespace_file)
+
+        for namespace, mapping in self._index_to_token.items():
+            with open(os.path.join(directory, namespace + ".txt"), "w", encoding="utf-8") as token_file:
+                num_tokens = len(mapping)
+                start_index = 1 if mapping[0] == self._padding_token else 0
+                for i in range(start_index, num_tokens):
+                    print(
+                        mapping[i].replace("\n", "@@NEWLINE@@"),
+                        file=token_file)
+
+    @classmethod
+    def from_files(
+            cls, directory: Union[str, os.PathLike],
+            padding_token: Optional[str] = DEFAULT_PADDING_TOKEN,
+            oov_token: Optional[str] = DEFAULT_OOV_TOKEN):
+        padding_token = padding_token if padding_token is not None else DEFAULT_PADDING_TOKEN
+        oov_token = oov_token if oov_token is not None else DEFAULT_OOV_TOKEN
+
+        with open(os.path.join(directory, NAMESPACE_PADDING_FILE), "r", encoding="utf-8") as namespace_file:
+            non_padded_namespaces = [namespace_str.strip()
+                                     for namespace_str in namespace_file]
+            vocab = cls(non_padded_namespaces=non_padded_namespaces,
+                        padding_token=padding_token, oov_token=oov_token)
+
+            for namespace_filename in os.listdir(directory):
+                if namespace_filename == NAMESPACE_PADDING_FILE:
+                    continue
+                if namespace_filename.startswith("."):
+                    continue
+                namespace = namespace_filename.replace(".txt", "")
+                if namespace in non_padded_namespaces:
+                    is_paddded = False
+                else:
+                    is_paddded = True
+                filename = os.path.join(directory, namespace_filename)
+                vocab.set_from_file(
+                    filename, is_padded=is_paddded, oov_token=oov_token,
+                    namespace=namespace)
+        return vocab
+
+    def set_from_file(
+            self, filename: str, is_padded: bool = True,
+            oov_token: str = DEFAULT_OOV_TOKEN, namespace: str = "tokens"):
+        if is_padded:
+            self._token_to_index[namespace] = {self._padding_token: 0}
+            self._index_to_token[namespace] = {0: self._padding_token}
+        else:
+            self._token_to_index[namespace] = {}
+            self._index_to_token[namespace] = {}
+
+        with open(filename, "r", encoding="utf-8") as input_file:
+            for i, line in enumerate(input_file):
+                index = i+1 if is_padded else i
+                token = line.strip().replace("@@NEWLINE@@", "\n")
+                if token == oov_token:
+                    token = self._oov_token
+                self._token_to_index[namespace][token] = index
+                self._index_to_token[namespace][index] = token
+        if is_padded:
+            assert self._oov_token in self._token_to_index[namespace], "OOV token not found!"
