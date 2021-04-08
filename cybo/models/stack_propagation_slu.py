@@ -13,7 +13,7 @@
 '''
 import tensorflow as tf
 
-from cybo.layers.self_attention import SelfAttentionLayer
+from cybo.modules.attentions import SelfAttentionLayer
 from cybo.losses.slu_loss import slu_loss_func
 from cybo.metrics.slu_overall_acc_metric import SluTokenLevelIntentOverallAcc
 from cybo.models.model import Model

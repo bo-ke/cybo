@@ -15,7 +15,7 @@ from typing import Dict
 import tensorflow as tf
 
 from cybo.models.model import Model
-from cybo.layers.slot_gate_attention import SlotGateAttention
+from cybo.modules.attentions import SlotGateAttention
 from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
 
 
