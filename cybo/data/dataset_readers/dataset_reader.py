@@ -74,7 +74,7 @@ class DatasetReader():
         return features
 
     def _convert_example_to_features(
-            self, examples: List[InputExample],
+            self, example: InputExample,
             vocab: Vocabulary, max_seq_length: int = 32) -> InputFeatures:
         raise NotImplementedError
 
