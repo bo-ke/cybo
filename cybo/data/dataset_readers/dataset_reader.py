@@ -37,7 +37,7 @@ class InputFeatures(BaseModel):
     input_ids: List[int]
 
     @classmethod
-    def return_types(cls):
+    def output_types(cls):
         # return {"input_ids": tf.int32, "label": tf.int32}
         raise NotImplementedError
 
@@ -88,9 +88,3 @@ class DatasetReader():
         else:
             tokens = tokens + [padding_token] * (max_seq_length - len(tokens))
         return tokens
-
-    @property
-    def return_types(self):
-        # todo
-        # 用于dataloader from generator 手动传入return_types
-        return InputFeatures.return_types()

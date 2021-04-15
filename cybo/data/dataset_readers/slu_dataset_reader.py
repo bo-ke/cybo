@@ -40,7 +40,7 @@ class SluInputFeatures(InputFeatures):
     tags_ids: Optional[List[int]]
 
     @classmethod
-    def return_types(cls):
+    def output_types(cls):
         return {"input_ids": tf.int32, "intent_ids": tf.int32, "tags_ids": tf.int32}
 
 
