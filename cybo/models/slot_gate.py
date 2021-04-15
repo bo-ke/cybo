@@ -17,6 +17,8 @@ import tensorflow as tf
 from cybo.models.model import Model
 from cybo.modules.attentions import SlotGateAttention
 from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
+from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
+from cybo.losses.token_classification_loss import TokenClassificationLoss
 
 
 class SlotGate(Model):
@@ -41,10 +43,9 @@ class SlotGate(Model):
             intent_size, activation="softmax")
         self.slot_output_dense = tf.keras.layers.Dense(
             slot_size, activation="softmax")
-        self.intent_loss_func = tf.keras.losses.SparseCategoricalCrossentropy(
-            name="intent_loss")
-        self.slot_loss_func = tf.keras.losses.SparseCategoricalCrossentropy(
-            name="slot_loss")
+        self.intent_loss = SequenceClassificationLoss()
+        self.slot_loss = TokenClassificationLoss()
+
         self.acc = SluOverallAcc()
 
     def call(
@@ -73,8 +74,11 @@ class SlotGate(Model):
         output_dict = {"intent_logits": y_intent,
                        "slot_logits": y_slot}
         if intent_ids is not None and tags_ids is not None:
-            output_dict["loss"] = self.intent_loss_func(
-                intent_ids, y_intent) + self.slot_loss_func(tags_ids, y_slot)
+            _intent_loss = self.intent_loss.compute_loss(
+                y_true=intent_ids, y_pred=y_intent)
+            _slot_loss = self.slot_loss.compute_loss(
+                y_true=tags_ids, y_pred=y_slot)
+            output_dict["loss"] = _intent_loss + _slot_loss
 
             self.acc.update_state(
                 y_true=[intent_ids, tags_ids],

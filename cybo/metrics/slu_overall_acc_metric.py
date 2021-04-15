@@ -39,8 +39,7 @@ class SluOverallAcc(tf.keras.metrics.Metric):
         intent_true, slot_true = y_true
         intent_pred, slot_pred = y_pred
 
-        mask = tf.cast(tf.math.not_equal(slot_true, 0), tf.int32)
-        o_intent = self.get_o_intent(intent_pred=intent_pred, mask=mask)
+        o_intent = self.get_o_intent(intent_pred=intent_pred)
         o_slot = tf.cast(tf.argmax(slot_pred, axis=-1), dtype=tf.int32)
         # intent acc
         intent_correct_prediction = tf.equal(
@@ -48,10 +47,11 @@ class SluOverallAcc(tf.keras.metrics.Metric):
             tf.cast(intent_true, dtype=tf.int32))
         intent_correct_prediction = tf.cast(
             intent_correct_prediction, dtype=tf.int32)
+        mask = tf.cast(tf.math.not_equal(slot_true, -100), tf.int32)
         # slot acc
         slot_correct_prediction = tf.equal(
             tf.cast(o_slot*mask, dtype=tf.int32),
-            tf.cast(slot_true, dtype=tf.int32))
+            tf.cast(slot_true*mask, dtype=tf.int32))
 
         slot_correct_prediction = tf.reduce_mean(
             tf.cast(slot_correct_prediction, dtype=tf.int32), axis=-1)

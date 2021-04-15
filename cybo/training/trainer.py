@@ -82,7 +82,7 @@ class Trainer():
             else:
                 tf.print(f"validation {self.monitor} is not improved")
 
-    @tf.function()
+    # @tf.function()
     def train_step(self, batch):
         with tf.GradientTape() as tape:
             output_dict = self.model(**batch, training=True)
