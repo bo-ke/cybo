@@ -16,7 +16,9 @@ import tensorflow as tf
 
 from cybo.models.model import Model
 from cybo.modules.attentions import SlotGateAttention
-from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
+# from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
+from cybo.metrics.nlu_acc_metric import NluAccMetric
+from cybo.metrics.seqeval_f1_metric import SeqEvalF1Metric
 from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
 
@@ -24,7 +26,9 @@ from cybo.losses.token_classification_loss import TokenClassificationLoss
 class SlotGate(Model):
     def __init__(
             self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
-            intent_size, slot_size, *args, **kwargs):
+            intent_size, slot_size, label_map: Dict = None, *args, **kwargs):
+
+        self.label_map = label_map
         super().__init__(*args, **kwargs)
         self.embedding = tf.keras.layers.Embedding(
             vocab_size, embedding_dim, mask_zero=True)
@@ -46,7 +50,8 @@ class SlotGate(Model):
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()
 
-        self.acc = SluOverallAcc()
+    def init_metrics(self):
+        return {"nlu_acc": NluAccMetric(), "f1_score": SeqEvalF1Metric(label_map=self.label_map)}
 
     def call(
             self, input_ids, intent_ids=None, tags_ids=None, mask=None,
@@ -80,17 +85,10 @@ class SlotGate(Model):
                 y_true=tags_ids, y_pred=y_slot)
             output_dict["loss"] = _intent_loss + _slot_loss
 
-            self.acc.update_state(
+            self._metrics["nlu_acc"].update_state(
                 y_true=[intent_ids, tags_ids],
                 y_pred=[y_intent, y_slot])
-            # debug(y_true=[intent_ids, tags_ids],
-            #       y_pred=[y_intent, y_slot])
+            if not training:
+                self._metrics["f1_score"].update_state(y_true=tags_ids,
+                                                       y_pred=y_slot)
         return output_dict
-
-    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        metrics_to_return = {"intent_acc": self.acc.result()[0].numpy(),
-                             "slot_acc": self.acc.result()[1].numpy(),
-                             "overall_acc": self.acc.result()[2].numpy()}
-        if reset:
-            self.acc.reset_states()
-        return metrics_to_return

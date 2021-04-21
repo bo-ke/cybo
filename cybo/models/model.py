@@ -14,15 +14,28 @@
 from typing import Dict
 import tensorflow as tf
 
+from cybo.metrics.metric import Metric
+
 
 class Model(tf.keras.models.Model):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, * args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._metrics = self.init_metrics()
 
-    @tf.function()
-    def call(self, inputs, training, mask) -> Dict:
+    def init_metrics(self) -> Dict[str, Metric]:
+        return {}
+
+    def call(self, inputs, training=True, mask=None) -> Dict:
         raise NotImplementedError
 
-    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        return {}
+    def get_metrics(self, reset: bool = False, training=True) -> Dict[str, float]:
+        metrics_to_return = {}
+        for _, _metric in self._metrics.items():
+            if not training or _metric.support_tf_function:
+                metrics_to_return = {**metrics_to_return,
+                                     **_metric.compute_metrics()}
+        if reset:
+            for _, _metric in self._metrics.items():
+                _metric.reset_states()
+        return metrics_to_return
