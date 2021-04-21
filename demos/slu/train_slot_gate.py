@@ -50,12 +50,13 @@ validation_dataloader = Dataloader.from_features(
 model = SlotGate(vocab_size=vocab.get_vocab_size(namespace="text"),
                  embedding_dim=256, hidden_dim=256, dropout_rate=0.4,
                  intent_size=vocab.get_vocab_size(namespace="intent"),
-                 slot_size=vocab.get_vocab_size(namespace="tags"))
+                 slot_size=vocab.get_vocab_size(namespace="tags"),
+                 label_map=vocab._index_to_token["tags"])
 
 
 def train():
     trainer = Trainer(model=model, training_dataloader=training_dataloader,
-                      checkpoint_path="./output_atis_slot_gate", epochs=100,
+                      checkpoint_path="./output_atis_slot_gate", epochs=20,
                       optimizer=tf.keras.optimizers.Adam())
     trainer.train()
 

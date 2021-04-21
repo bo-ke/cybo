@@ -12,20 +12,22 @@
 
 '''
 import tensorflow as tf
+from cybo.data.dataloader import Dataloader
+from cybo.models.model import Model
 
 
-def evaluate(model, dataloader):
+def evaluate(model: Model, dataloader: Dataloader):
     loss_metric = tf.keras.metrics.Mean(name="loss")
     model.get_metrics(reset=True)
     for batch in dataloader:
         output_dict = model(**batch, training=False)
         loss_metric.update_state(output_dict["loss"])
-    metrics_to_return = model.get_metrics()
+    metrics_to_return = model.get_metrics(training=False, reset=True)
     metrics_to_return["loss"] = loss_metric.result().numpy()
     return metrics_to_return
 
 
-def test(model, dataloader, checkpoint_dir: str = None):
+def test(model: Model, dataloader: Dataloader, checkpoint_dir: str = None):
     if checkpoint_dir is not None:
         # load model weights from checkpoint_dir
         ckpt = tf.train.Checkpoint(model=model)
