@@ -27,10 +27,12 @@ class InputExample(BaseModel):
     guid: int
 
     def count_vocab_items(self, counter: Dict[str, Dict[str, int]]):
-        # for token in self.text:
-        #     counter["text"][token] += 1
-        # counter["label"][self.label] += 1
-        raise NotImplementedError
+        for k, v in self.dict(exclude={"guid": ...}).items():
+            if isinstance(v, list):
+                for i in v:
+                    counter[k][i] += 1
+            else:
+                counter[k][v] += 1
 
 
 class InputFeatures(BaseModel):
