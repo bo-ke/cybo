@@ -41,7 +41,7 @@ class TokenClassificationLoss(Loss):
         active_loss = tf.reshape(y_true, (-1,)) != -100
 
         reduced_logits = tf.boolean_mask(tf.reshape(
-            y_pred, (-1, shape_list(y_pred)[2])), active_loss)
+            y_pred, (-1, shape_list(y_pred)[-1])), active_loss)
         labels = tf.boolean_mask(tf.reshape(y_true, (-1,)), active_loss)
 
         return self._loss_fn(labels, reduced_logits)

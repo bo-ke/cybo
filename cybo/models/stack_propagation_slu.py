@@ -12,10 +12,13 @@
 
 '''
 import tensorflow as tf
+from typing import Dict
 
 from cybo.modules.attentions import SelfAttentionLayer
 from cybo.losses.slu_loss import slu_loss_func
-from cybo.metrics.slu_overall_acc_metric import SluTokenLevelIntentOverallAcc
+# from cybo.metrics.slu_overall_acc_metric import SluTokenLevelIntentOverallAcc
+from cybo.metrics.nlu_acc_metric import NluAccMetric, Metric
+from cybo.losses.token_classification_loss import TokenClassificationLoss
 from cybo.models.model import Model
 
 
@@ -48,8 +51,12 @@ class StackPropagationSlu(Model):
 
         self.intent_embedding = tf.keras.layers.Embedding(intent_size, 8)
         self.slot_embedding = tf.keras.layers.Embedding(slot_size, 32)
+        self._intent_loss = TokenClassificationLoss()
+        self._slot_loss = TokenClassificationLoss()
+        # self.acc = SluTokenLevelIntentOverallAcc()
 
-        self.acc = SluTokenLevelIntentOverallAcc()
+    def init_metrics(self) -> Dict[str, Metric]:
+        return {"nlu_acc": NluAccMetric()}
 
     # @tf.function()
     def call(self, input_ids, intent_ids=None, tags_ids=None, mask=None,
@@ -101,28 +108,43 @@ class StackPropagationSlu(Model):
             # y_slot.append(_h_slot_i)
             prev_slot_tensor = self.slot_embedding(
                 tf.argmax(_h_slot_i, axis=-1))
-
-        # y_intent = tf.stack(y_intent, axis=1)
-        # y_slot = tf.stack(y_slot, axis=1)
         # 注意不可用reshape  transpose与reshape结果是不一样的
         # 错误写法: tf.reshape(y_intent.stack(), [x.shape[0], x.shape[1], -1])
         y_intent = tf.transpose(y_intent.stack(), [1, 0, 2])
         y_slot = tf.transpose(y_slot.stack(), [1, 0, 2])
 
-        output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
+        o_intent = self.get_o_intent(intent_pred=y_intent, mask=x._keras_mask)
+
+        output_dict = {"intent_logits": o_intent, "slot_logits": y_slot}
         if intent_ids is not None and tags_ids is not None:
-            y_true = {"intent": intent_ids, "tags": tags_ids}
-            y_pred = {"intent_logits": y_intent, "slot_logits": y_slot}
-            loss = slu_loss_func(y_true=y_true, y_pred=y_pred)
-            output_dict["loss"] = loss
-            self.acc.update_state(y_true=y_true, y_pred=y_pred)
-            # debug(y_true=y_true, y_pred=y_pred)
+            _intent_ids = tf.broadcast_to(intent_ids, tags_ids.shape)
+            active_loss = tags_ids != -100
+
+            _intent_loss = self._intent_loss.compute_loss(
+                y_true=tf.boolean_mask(_intent_ids, active_loss),
+                y_pred=tf.boolean_mask(y_intent, active_loss))
+            _slot_loss = self._slot_loss.compute_loss(
+                y_true=tags_ids, y_pred=y_slot)
+            output_dict["loss"] = _intent_loss + _slot_loss
+            self._metrics["nlu_acc"].update_state(
+                y_true=[intent_ids, tags_ids],
+                y_pred=[o_intent, y_slot])
         return output_dict
 
-    def get_metrics(self, reset: bool = False):
-        metrics_to_return = {"intent_acc": self.acc.result()[0].numpy(),
-                             "slot_acc": self.acc.result()[1].numpy(),
-                             "overall_acc": self.acc.result()[2].numpy()}
-        if reset:
-            self.acc.reset_states()
-        return metrics_to_return
+    @staticmethod
+    def get_o_intent(intent_pred, mask):
+        mask = tf.cast(mask, dtype=tf.int32)
+        o_intent = tf.argmax(intent_pred, axis=-1)
+        seq_lengths = tf.reduce_sum(mask, axis=-1)
+        # 取token_level_intent most_common 作为query intent
+        # https://www.tensorflow.org/api_docs/python/tf/unique_with_counts
+
+        def get_max_count_intent(_intent):
+            _y, _idx, _count = tf.unique_with_counts(_intent)
+            _intent = _y[tf.argmax(_count)]
+            return [_intent]
+
+        o_intent = tf.convert_to_tensor(
+            [get_max_count_intent(o_intent[i][: seq_lengths[i]])
+             for i in range(len(seq_lengths))], dtype=tf.int32)
+        return o_intent

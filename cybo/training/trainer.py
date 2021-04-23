@@ -15,7 +15,7 @@ class Trainer():
                  validation_dataloader: Dataloader = None,
                  patience: int = 5,
                  max_to_keep: int = 3,
-                 monitor: str = "overall_acc"
+                 monitor: str = "acc"
                  ) -> None:
 
         self.model = model

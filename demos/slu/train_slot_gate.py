@@ -65,11 +65,10 @@ def test_model():
     test_features = dataset_reader.convert_examples_to_features(
         examples=test_examples, vocab=vocab, max_seq_length=32)
     test_dataloader = Dataloader.from_features(test_features, batch_size=128)
-    print(test(model=model, dataloader=test_dataloader))
     print(test(model=model, dataloader=test_dataloader,
                checkpoint_dir="./output_atis_slot_gate"))
 
 
 if __name__ == "__main__":
-    train()
+    # train()
     test_model()
