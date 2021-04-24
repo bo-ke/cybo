@@ -17,7 +17,7 @@ from transformers import BertTokenizer
 from cybo.data.tokenizers import Tokenizer
 
 
-class TransformersBertTokenizer(Tokenizer, BertTokenizer):
+class TransformersBertTokenizer(BertTokenizer, Tokenizer):
     """huggingface-transformers BertTokenizer
 
     Args:

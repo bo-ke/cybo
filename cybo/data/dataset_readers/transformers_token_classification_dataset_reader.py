@@ -10,10 +10,9 @@
 这一行开始写关于本文件的说明与解释
 
 '''
-from typing import Optional, List
+from typing import Optional, List, Dict
 from cybo.data.dataset_readers.dataset_reader import DatasetReader, InputFeatures, InputExample
 from cybo.data.tokenizers.transformers_bert_tokenizer import TransformersBertTokenizer
-from cybo.data.vocabulary import Vocabulary
 
 
 class TransformersTokenClassificationInputExample(InputExample):
@@ -37,8 +36,8 @@ class TransformersTokenClassificationDatasetReader(DatasetReader):
 
     def _convert_example_to_features(
             self, example: InputExample,
-            vocab: Vocabulary,
             max_seq_length: int,
+            label_map: Dict,
             cls_token_at_end=False,
             cls_token="[CLS]",
             cls_token_segment_id=1,
@@ -71,8 +70,7 @@ class TransformersTokenClassificationDatasetReader(DatasetReader):
         Returns:
             InputFeatures: [description]
         """
-        label_map = vocab._token_to_index["labels"]
-
+        # label_map = vocab._token_to_index["labels"]
         tokens = []
         label_ids = []
         for word, label in zip(example.words, example.labels):
