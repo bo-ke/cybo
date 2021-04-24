@@ -21,12 +21,12 @@ class SlotGateAttention(tf.keras.layers.Layer):
         : remove_slot_attn: if False, use slot attention, else c_slot = state_outputs
     """
 
-    def __init__(self, atten_size, remove_slot_attn=False, **kwargs):
+    def __init__(self, attn_size, remove_slot_attn=False, **kwargs):
         self.remove_slot_attn = remove_slot_attn
         super(SlotGateAttention, self).__init__(**kwargs)
-        self.attn_size = atten_size
+        self.attn_size = attn_size
         self.intent_attention_v = self.add_weight(
-            name="intent_AttnV", shape=(atten_size,),
+            name="intent_AttnV", shape=(attn_size,),
             initializer="glorot_uniform")
         self.intent_input_dense = tf.keras.layers.Dense(
             self.attn_size, use_bias=True)

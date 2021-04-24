@@ -36,7 +36,7 @@ class SlotGate(Model):
             hidden_dim, return_sequences=True, return_state=True))
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
         self.slot_gate_attention = SlotGateAttention(
-            atten_size=2*hidden_dim, remove_slot_attn=False)
+            attn_size=2*hidden_dim, remove_slot_attn=False)
 
         self.v = self.add_weight(
             name="v", shape=(2 * hidden_dim,),
