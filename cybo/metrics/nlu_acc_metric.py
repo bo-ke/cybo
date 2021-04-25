@@ -28,8 +28,12 @@ class NluAccMetric(Metric):
         intent_true, slot_true = y_true
         intent_pred, slot_pred = y_pred
 
-        intent_acc = tf.keras.metrics.sparse_categorical_accuracy(
-            y_true=intent_true, y_pred=intent_pred)
+        if len(intent_pred.shape) == 2 and intent_pred.shape[1] == 1:
+            intent_acc = tf.keras.metrics.categorical_accuracy(
+                y_true=intent_true, y_pred=intent_pred)
+        else:
+            intent_acc = tf.keras.metrics.sparse_categorical_accuracy(
+                y_true=intent_true, y_pred=intent_pred)
 
         if len(slot_pred.shape) == 3:
             slot_pred = tf.argmax(slot_pred, axis=-1, output_type=tf.int32)
