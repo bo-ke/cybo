@@ -15,6 +15,7 @@ from typing import Dict
 import tensorflow as tf
 
 from cybo.models.model import Model
+from cybo.data.vocabulary import Vocabulary
 from cybo.modules.attentions import SlotGateAttention
 # from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
 from cybo.metrics.nlu_acc_metric import NluAccMetric
@@ -24,14 +25,19 @@ from cybo.losses.token_classification_loss import TokenClassificationLoss
 
 
 class SlotGate(Model):
-    def __init__(
-            self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
-            intent_size, slot_size, label_map: Dict = None, *args, **kwargs):
 
-        self.label_map = label_map
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self, embedding_dim, hidden_dim, dropout_rate,
+            vocab: Vocabulary = None, *args, **kwargs):
+
+        super().__init__(vocab=vocab, *args, **kwargs)
+
+        _vocab_size = self._vocab.get_vocab_size("text")
+        _intent_size = self._vocab.get_vocab_size("intent")
+        _slot_size = self._vocab.get_vocab_size("tags")
+
         self.embedding = tf.keras.layers.Embedding(
-            vocab_size, embedding_dim, mask_zero=True)
+            _vocab_size, embedding_dim, mask_zero=True)
         self.bi_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
             hidden_dim, return_sequences=True, return_state=True))
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
@@ -44,14 +50,14 @@ class SlotGate(Model):
         self.intent_liner_layer = tf.keras.layers.Dense(2*hidden_dim)
 
         self.intent_output_dense = tf.keras.layers.Dense(
-            intent_size, activation="softmax")
+            _intent_size, activation="softmax")
         self.slot_output_dense = tf.keras.layers.Dense(
-            slot_size, activation="softmax")
+            _slot_size, activation="softmax")
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()
 
     def init_metrics(self):
-        return {"nlu_acc": NluAccMetric(), "f1_score": SeqEvalF1Metric(label_map=self.label_map)}
+        return {"nlu_acc": NluAccMetric(), "f1_score": SeqEvalF1Metric(label_map=self._vocab._index_to_token["tags"])}
 
     def call(
             self, input_ids, intent_ids=None, tags_ids=None, mask=None,
