@@ -43,9 +43,10 @@ class BertSlu(Model):
     def call(
             self, input_ids, attention_mask, token_type_ids, intent_ids=None,
             tags_ids=None, training=True, mask=None) -> Dict:
-        hidden_states, pooler = self.pretrained_layer(
-            inputs=input_ids, attention_mask=attention_mask,
-            token_type_ids=token_type_ids)
+        _bert_output = self.pretrained_layer(
+            input_ids=input_ids, attention_mask=attention_mask,
+            token_type_ids=token_type_ids, training=training)
+        hidden_states, pooler = _bert_output.last_hidden_state,  _bert_output.pooler_output
         pooler = self.dropout1(pooler, training=training)
         intent_logits = self.intent_output_dense(pooler)
 

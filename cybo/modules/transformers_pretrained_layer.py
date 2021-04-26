@@ -13,7 +13,7 @@
 '''
 import tensorflow as tf
 from transformers import TFAutoModel, AutoConfig
-from transformers.modeling_tf_bert import TFBertModel
+# from transformers.models.bert.modeling_tf_bert import TFBertModel
 
 
 class TransformersPretrainedLayer(tf.keras.layers.Layer):
@@ -28,7 +28,9 @@ class TransformersPretrainedLayer(tf.keras.layers.Layer):
         self._bert = TFAutoModel.from_pretrained(
             pretrained_model_name_or_path=pretrained_model, from_pt=from_pt)
 
-    def call(self, inputs, attention_mask=None, token_type_ids=None):
+    def call(
+            self, input_ids, attention_mask=None, token_type_ids=None,
+            training=True):
         return self._bert(
-            inputs=inputs, attention_mask=attention_mask,
-            token_type_ids=token_type_ids)
+            input_ids=input_ids, attention_mask=attention_mask,
+            token_type_ids=token_type_ids, training=training)
