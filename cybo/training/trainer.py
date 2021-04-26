@@ -79,6 +79,7 @@ class Trainer():
                 early_stop_epochs += 1
             if early_stop_epochs >= self.patience:
                 tf.print(f"Early stopping with patience {self.patience}")
+                break
         tf.print("Training completed !")
 
     @tf.function()
