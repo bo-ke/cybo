@@ -15,12 +15,14 @@ from typing import Dict
 import tensorflow as tf
 
 from cybo.metrics.metric import Metric
+from cybo.data.vocabulary import Vocabulary
 
 
 class Model(tf.keras.models.Model):
 
-    def __init__(self, * args, **kwargs):
+    def __init__(self, vocab: Vocabulary = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._vocab = vocab
         self._metrics = self.init_metrics()
 
     def init_metrics(self) -> Dict[str, Metric]:
