@@ -22,6 +22,8 @@ class NluAccMetric(Metric):
         super().__init__(name=name, suppord_tf_function=suppord_tf_function)
 
         self.positive = self._zero_variable_init()
+        self.intent_positive = self._zero_variable_init()
+        self.slot_positive = self._zero_variable_init()
         self.count = self._zero_variable_init()
 
     def update_state(self, y_true, y_pred):
@@ -44,13 +46,21 @@ class NluAccMetric(Metric):
         nlu_acc = tf.cast(intent_acc, tf.int32) * slot_acc
 
         self.positive.assign_add(tf.cast(tf.reduce_sum(nlu_acc), tf.float32))
+        self.intent_positive.assign_add(
+            tf.cast(tf.reduce_sum(intent_acc), tf.float32))
+        self.slot_positive.assign_add(
+            tf.cast(tf.reduce_sum(slot_acc), tf.float32))
         self.count.assign_add(tf.constant(len(nlu_acc), dtype=tf.float32))
 
     def reset_states(self):
         self.positive.assign(0)
         self.count.assign(0)
+        self.intent_positive.assign(0)
+        self.slot_positive.assign(0)
 
     def compute_metrics(self):
         return {
+            "intent_acc": (self.intent_positive/self.count).numpy(),
+            "slot_acc": (self.slot_positive/self.count).numpy(),
             "nlu_acc": (self.positive/self.count).numpy()
         }
