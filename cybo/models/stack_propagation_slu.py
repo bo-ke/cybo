@@ -14,6 +14,7 @@
 import tensorflow as tf
 from typing import Dict
 
+from cybo.data.vocabulary import Vocabulary
 from cybo.modules.attentions import SelfAttentionLayer
 from cybo.losses.slu_loss import slu_loss_func
 # from cybo.metrics.slu_overall_acc_metric import SluTokenLevelIntentOverallAcc
@@ -24,11 +25,16 @@ from cybo.models.model import Model
 
 class StackPropagationSlu(Model):
     def __init__(
-            self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
-            intent_size, slot_size):
-        super().__init__()
+            self, embedding_dim, hidden_dim, dropout_rate,
+            vocab: Vocabulary, *args, **kwargs):
+        super().__init__(vocab=vocab, *args, **kwargs)
+
+        _vocab_size = self._vocab.get_vocab_size("text")
+        _intent_size = self._vocab.get_vocab_size("intent")
+        _slot_size = self._vocab.get_vocab_size("tags")
+
         self.embedding = tf.keras.layers.Embedding(
-            vocab_size, embedding_dim, mask_zero=True)
+            _vocab_size, embedding_dim, mask_zero=True)
         self.bi_lstm = tf.keras.layers.Bidirectional(
             tf.keras.layers.LSTM(hidden_dim, return_sequences=True))
         self.attention_layer = SelfAttentionLayer(
@@ -45,15 +51,14 @@ class StackPropagationSlu(Model):
         self.slot_decoder_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 
         self.intent_liner_layer = tf.keras.layers.Dense(
-            units=intent_size, activation="softmax")
+            units=_intent_size, activation="softmax")
         self.slot_liner_layer = tf.keras.layers.Dense(
-            units=slot_size, activation="softmax")
+            units=_slot_size, activation="softmax")
 
-        self.intent_embedding = tf.keras.layers.Embedding(intent_size, 8)
-        self.slot_embedding = tf.keras.layers.Embedding(slot_size, 32)
+        self.intent_embedding = tf.keras.layers.Embedding(_intent_size, 8)
+        self.slot_embedding = tf.keras.layers.Embedding(_slot_size, 32)
         self._intent_loss = TokenClassificationLoss()
         self._slot_loss = TokenClassificationLoss()
-        # self.acc = SluTokenLevelIntentOverallAcc()
 
     def init_metrics(self) -> Dict[str, Metric]:
         return {"nlu_acc": NluAccMetric()}

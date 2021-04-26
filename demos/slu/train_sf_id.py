@@ -47,15 +47,15 @@ validation_features = dataset_reader.convert_examples_to_features(
 validation_dataloader = Dataloader.from_features(
     validation_features, batch_size=128)
 
-model = SfId(vocab_size=vocab.get_vocab_size(namespace="text"),
+model = SfId(vocab=vocab,
              embedding_dim=256, hidden_dim=256, dropout_rate=0.4,
-             intent_size=vocab.get_vocab_size(namespace="intent"),
-             slot_size=vocab.get_vocab_size(namespace="tags"), iteration_num=2)
+             iteration_num=2)
 
 
 def train():
     trainer = Trainer(model=model, training_dataloader=training_dataloader,
-                      checkpoint_path="./output_atis_sf_id", epochs=20,
+                      validation_dataloader=validation_dataloader,
+                      checkpoint_path="./output_atis_sf_id", epochs=30,
                       optimizer=tf.keras.optimizers.Adam(), monitor="nlu_acc")
     trainer.train()
 

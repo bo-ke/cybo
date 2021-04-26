@@ -51,17 +51,19 @@ validation_dataloader = Dataloader.from_features(
     validation_features, batch_size=128)
 
 model = BertSlu(
+    vocab=vocab,
     pretrained_layer=TransformersPretrainedLayer(
         pretrained_model="bert-base-uncased"),
-    dropout_rate=0.4, intent_size=vocab.get_vocab_size(
-        namespace="intent"),
-    slot_size=vocab.get_vocab_size(namespace="tags"))
+    dropout_rate=0.4)
 
 
 def train():
-    trainer = Trainer(model=model, training_dataloader=training_dataloader,
-                      checkpoint_path="./output_atis_bert", epochs=20,
-                      optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5), monitor="nlu_acc")
+    trainer = Trainer(
+        model=model, training_dataloader=training_dataloader,
+        validation_dataloader=validation_dataloader,
+        checkpoint_path="./output_atis_bert", epochs=100,
+        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
+        monitor="nlu_acc")
     trainer.train()
 
 

@@ -15,6 +15,8 @@ import tensorflow as tf
 from typing import Dict
 
 from cybo.models.model import Model
+from cybo.data.vocabulary import Vocabulary
+
 from cybo.modules.transformers_pretrained_layer import TransformersPretrainedLayer
 from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
@@ -23,16 +25,21 @@ from cybo.metrics.nlu_acc_metric import Metric, NluAccMetric
 
 class BertSlu(Model):
     def __init__(self, pretrained_layer: TransformersPretrainedLayer,
-                 dropout_rate, intent_size, slot_size, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+                 dropout_rate, vocab: Vocabulary, *args, **kwargs):
+        super().__init__(vocab=vocab, *args, **kwargs)
+
+        # _vocab_size = self._vocab.get_vocab_size("text")
+        _intent_size = self._vocab.get_vocab_size("intent")
+        _slot_size = self._vocab.get_vocab_size("tags")
+
         self.pretrained_layer = pretrained_layer
         self.dropout1 = tf.keras.layers.Dropout(rate=dropout_rate)
         self.dropout2 = tf.keras.layers.Dropout(rate=dropout_rate)
 
         self.intent_output_dense = tf.keras.layers.Dense(
-            intent_size, activation="softmax")
+            _intent_size, activation="softmax")
         self.slot_output_dense = tf.keras.layers.Dense(
-            slot_size, activation="softmax")
+            _slot_size, activation="softmax")
 
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()

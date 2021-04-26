@@ -48,12 +48,11 @@ validation_dataloader = Dataloader.from_features(
     validation_features, batch_size=128)
 
 model = StackPropagationSlu(
-    vocab_size=vocab.get_vocab_size(namespace="text"),
-    embedding_dim=256, hidden_dim=256, dropout_rate=0.4,
-    intent_size=vocab.get_vocab_size(namespace="intent"),
-    slot_size=vocab.get_vocab_size(namespace="tags"))
+    vocab=vocab, embedding_dim=256, hidden_dim=256, dropout_rate=0.4)
 
-trainer = Trainer(model=model, training_dataloader=training_dataloader,
-                  checkpoint_path="./output_map", epochs=200, monitor="nlu_acc",
-                  optimizer=tf.keras.optimizers.Adam())
+trainer = Trainer(
+    model=model, training_dataloader=training_dataloader,
+    validation_dataloader=validation_dataloader,
+    checkpoint_path="./output_stack_propagation", epochs=200, monitor="nlu_acc",
+    optimizer=tf.keras.optimizers.Adam())
 trainer.train()

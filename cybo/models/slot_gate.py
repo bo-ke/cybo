@@ -28,7 +28,7 @@ class SlotGate(Model):
 
     def __init__(
             self, embedding_dim, hidden_dim, dropout_rate,
-            vocab: Vocabulary = None, *args, **kwargs):
+            vocab: Vocabulary, *args, **kwargs):
 
         super().__init__(vocab=vocab, *args, **kwargs)
 

@@ -14,6 +14,7 @@
 import tensorflow as tf
 from typing import Dict
 from cybo.models.model import Model
+from cybo.data.vocabulary import Vocabulary
 
 from cybo.modules.attentions.slot_gate_attention import SlotGateAttention
 from cybo.modules.sf_id_subnet import SfIdSubnet
@@ -23,12 +24,17 @@ from cybo.metrics.nlu_acc_metric import Metric, NluAccMetric
 
 
 class SfId(Model):
-    def __init__(self, vocab_size, embedding_dim, hidden_dim, dropout_rate,
-                 intent_size, slot_size, priority_order: str = "slot_first",
+    def __init__(self, embedding_dim, hidden_dim, dropout_rate,
+                 vocab: Vocabulary, priority_order: str = "slot_first",
                  iteration_num: int = 1, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(vocab=vocab, *args, **kwargs)
+
+        _vocab_size = self._vocab.get_vocab_size("text")
+        _intent_size = self._vocab.get_vocab_size("intent")
+        _slot_size = self._vocab.get_vocab_size("tags")
+
         self.embedding = tf.keras.layers.Embedding(
-            input_dim=vocab_size, output_dim=embedding_dim, mask_zero=True)
+            input_dim=_vocab_size, output_dim=embedding_dim, mask_zero=True)
         self.bi_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
             hidden_dim, return_sequences=True, return_state=True))
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
@@ -42,9 +48,9 @@ class SfId(Model):
                 iteration_num=iteration_num)
             for i in range(iteration_num)]
         self.intent_output_dense = tf.keras.layers.Dense(
-            intent_size, activation="softmax")
+            _intent_size, activation="softmax")
         self.slot_output_dense = tf.keras.layers.Dense(
-            slot_size, activation="softmax")
+            _slot_size, activation="softmax")
         self.iteration_num = iteration_num
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()
