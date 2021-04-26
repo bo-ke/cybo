@@ -55,13 +55,14 @@ class SeqEvalF1Metric(Metric):
         return preds_list, out_label_list
 
     def compute_metrics(self) -> Dict:
+        # TODO 这里有个很神奇的事情，不传zero_division，即使用默认值0的时候，这里的运算会慢很多，待进一步分析
         logger.info(
-            f"\n{classification_report(self.out_label_list, self.preds_list)}")
+            f"\n{classification_report(self.out_label_list, self.preds_list, zero_division=0)}")
 
         return {
-            "precision": precision_score(self.out_label_list, self.preds_list),
-            "recall": recall_score(self.out_label_list, self.preds_list),
-            "f1": f1_score(self.out_label_list, self.preds_list),
+            "precision": precision_score(self.out_label_list, self.preds_list, zero_division=0),
+            "recall": recall_score(self.out_label_list, self.preds_list, zero_division=0),
+            "f1": f1_score(self.out_label_list, self.preds_list, zero_division=0),
         }
 
     def reset_states(self):
