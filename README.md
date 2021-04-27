@@ -14,14 +14,14 @@ Cybo 提供多种神经网络组件以及复现模型 - 涵盖文本分类、命
 | transformer                   | Text  |             |       |
 | BertForSequenceClassification |       |             |       |
 
-### 命名实体识别
+### NER (命名实体识别)
 
 | name                       | paper | Description | demos |
 | -------------------------- | ----- | ----------- | ----- |
 | BiLSTM+CRF                 | Title |             |       |
 | BertForTokenClassification |       |             |       |
 
-### SLU(意图槽位联合模型)
+### SLU (意图槽位联合模型)
 
 | name                | paper | Description | demos |
 | ------------------- | ----- | ----------- | ----- |
