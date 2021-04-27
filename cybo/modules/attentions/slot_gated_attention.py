@@ -4,7 +4,7 @@
 @contact: kebo0912@outlook.com
 
 @version: 1.0
-@file: slot_gate_attention.py
+@file: slot_gated_attention.py
 @time: 2021/03/17 20:28:11
 
 这一行开始写关于本文件的说明与解释
@@ -14,7 +14,7 @@
 import tensorflow as tf
 
 
-class SlotGateAttention(tf.keras.layers.Layer):
+class SlotGatedAttention(tf.keras.layers.Layer):
     """
         get intent attention and slot attention
         reference: "Slot-Gated Modeling for Joint Slot Filling and Intent Prediction", Chih-Wen Goo, Guang Gao

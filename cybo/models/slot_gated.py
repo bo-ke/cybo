@@ -4,7 +4,7 @@
 @contact: kebo0912@outlook.com
 
 @version: 1.0
-@file: slot_gate.py
+@file: slot_gated.py
 @time: 2021/03/17 20:25:32
 
 这一行开始写关于本文件的说明与解释
@@ -16,7 +16,7 @@ import tensorflow as tf
 
 from cybo.models.model import Model
 from cybo.data.vocabulary import Vocabulary
-from cybo.modules.attentions import SlotGateAttention
+from cybo.modules.attentions import SlotGatedAttention
 # from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
 from cybo.metrics.nlu_acc_metric import NluAccMetric
 from cybo.metrics.seqeval_f1_metric import SeqEvalF1Metric
@@ -24,7 +24,7 @@ from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
 
 
-class SlotGate(Model):
+class SlotGated(Model):
 
     def __init__(
             self, embedding_dim, hidden_dim, dropout_rate,
@@ -41,7 +41,7 @@ class SlotGate(Model):
         self.bi_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
             hidden_dim, return_sequences=True, return_state=True))
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
-        self.slot_gate_attention = SlotGateAttention(
+        self.slot_gated_attention = SlotGatedAttention(
             attn_size=2*hidden_dim, remove_slot_attn=False)
 
         self.v = self.add_weight(
@@ -68,7 +68,7 @@ class SlotGate(Model):
         hidden = self.dropout(hidden, training=training)
         final_state = tf.concat([forward_h, backword_h], axis=-1)
         # (b, 2*e)
-        c_slot, c_intent = self.slot_gate_attention(hidden, final_state)
+        c_slot, c_intent = self.slot_gated_attention(hidden, final_state)
         # (b, s, 2*e) (b, 2*e)
         # formula(6) in paper: g = \sum(v * tanh(C_slot + W * C_intent))
         _c_intent = tf.expand_dims(c_intent, axis=1)

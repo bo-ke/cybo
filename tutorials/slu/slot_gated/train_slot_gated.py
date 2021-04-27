@@ -14,7 +14,7 @@
 from cybo.training.utils import test
 from cybo.training.trainer import Trainer
 from cybo.data.dataset_readers.slu_dataset_reader import SluDatasetReader
-from cybo.models.slot_gate import SlotGate
+from cybo.models.slot_gated import SlotGated
 from cybo.data.vocabulary import Vocabulary
 from cybo.data.dataloader import Dataloader
 import tensorflow as tf
@@ -27,11 +27,11 @@ for gpu in gpus:
 
 dataset_reader = SluDatasetReader()
 training_examples = dataset_reader.get_examples(
-    filepath="demos/slu/dataset/atis/train.txt")
+    filepath="tutorials/slu/dataset/atis/train.txt")
 validation_examples = dataset_reader.get_examples(
-    filepath="demos/slu/dataset/atis/dev.txt")
+    filepath="tutorials/slu/dataset/atis/dev.txt")
 test_examples = dataset_reader.get_examples(
-    filepath="demos/slu/dataset/atis/test.txt")
+    filepath="tutorials/slu/dataset/atis/test.txt")
 
 vocab = Vocabulary.from_examples(
     examples=training_examples + validation_examples + test_examples,
@@ -47,14 +47,14 @@ validation_features = dataset_reader.convert_examples_to_features(
 validation_dataloader = Dataloader.from_features(
     validation_features, batch_size=128)
 
-model = SlotGate(vocab=vocab, embedding_dim=256,
-                 hidden_dim=256, dropout_rate=0.4)
+model = SlotGated(vocab=vocab, embedding_dim=256,
+                  hidden_dim=256, dropout_rate=0.4)
 
 
 def train():
     trainer = Trainer(model=model, training_dataloader=training_dataloader,
                       validation_dataloader=validation_dataloader,
-                      checkpoint_path="./output_atis_slot_gate", epochs=30,
+                      checkpoint_path="./output_atis_slot_gated", epochs=30,
                       optimizer=tf.keras.optimizers.Adam())
     trainer.train()
 
@@ -64,7 +64,7 @@ def test_model():
         examples=test_examples, vocab=vocab, max_seq_length=32)
     test_dataloader = Dataloader.from_features(test_features, batch_size=128)
     print(test(model=model, dataloader=test_dataloader,
-               checkpoint_dir="./output_atis_slot_gate"))
+               checkpoint_dir="./output_atis_slot_gated"))
 
 
 if __name__ == "__main__":
