@@ -23,7 +23,7 @@ class SlotGatedAttention(tf.keras.layers.Layer):
 
     def __init__(self, attn_size, remove_slot_attn=False, **kwargs):
         self.remove_slot_attn = remove_slot_attn
-        super(SlotGateAttention, self).__init__(**kwargs)
+        super(SlotGatedAttention, self).__init__(**kwargs)
         self.attn_size = attn_size
         self.intent_attention_v = self.add_weight(
             name="intent_AttnV", shape=(attn_size,),
