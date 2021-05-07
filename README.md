@@ -25,7 +25,7 @@ Cybo 提供多种神经网络组件以及复现模型 - 涵盖文本分类、命
 
 | name                | paper | Description | tutorials |
 | ------------------- | ----- | ----------- | ----- |
-| SlotGated           | [Slot-Gated Modeling for Joint Slot Filling and Intent Prediction](https://www.aclweb.org/anthology/N18-2118.pdf) |             | [slot_gated](https://github.com/bo-ke/cybo/tree/master/tutorials/slu/slot_gated)      |
-| SF-ID               |       |             |       |
+| SlotGated           | [Slot-Gated Modeling for Joint Slot Filling and Intent Prediction](https://www.aclweb.org/anthology/N18-2118.pdf) |             | [slot_gated](https://github.com/bo-ke/cybo/tree/master/tutorials/slu/slot_gated)|
+| SF-ID               |  [A Novel Bi-directional Interrelated Model for Joint Intent Detection and Slot Filling](https://arxiv.org/pdf/1907.00390v1.pdf)     |       | [SF-ID](https://github.com/bo-ke/cybo/tree/master/tutorials/slu/sf_id)      |
 | StackPropagationSLU |       |             |       |
 | BertSLU             |

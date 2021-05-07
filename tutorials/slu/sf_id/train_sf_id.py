@@ -56,7 +56,8 @@ def train():
     trainer = Trainer(model=model, training_dataloader=training_dataloader,
                       validation_dataloader=validation_dataloader,
                       checkpoint_path="./output_atis_sf_id", epochs=30,
-                      optimizer=tf.keras.optimizers.Adam(), monitor="nlu_acc")
+                      optimizer=tf.keras.optimizers.Adam(), 
+                      monitor="nlu_acc")
     trainer.train()
 
 

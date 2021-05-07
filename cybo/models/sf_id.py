@@ -16,11 +16,12 @@ from typing import Dict
 from cybo.models.model import Model
 from cybo.data.vocabulary import Vocabulary
 
-from cybo.modules.attentions.slot_gate_attention import SlotGateAttention
+from cybo.modules.attentions.slot_gated_attention import SlotGatedAttention
 from cybo.modules.sf_id_subnet import SfIdSubnet
 from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
 from cybo.metrics.nlu_acc_metric import Metric, NluAccMetric
+from cybo.metrics.seqeval_f1_metric import SeqEvalF1Metric
 
 
 class SfId(Model):
@@ -38,7 +39,7 @@ class SfId(Model):
         self.bi_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
             hidden_dim, return_sequences=True, return_state=True))
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
-        self.slot_gate_attention = SlotGateAttention(
+        self.slot_gated_attention = SlotGatedAttention(
             attn_size=2*hidden_dim, remove_slot_attn=False)
 
         self.sf_id_subnet_stack = [
@@ -56,7 +57,7 @@ class SfId(Model):
         self.slot_loss = TokenClassificationLoss()
 
     def init_metrics(self) -> Dict[str, Metric]:
-        return {"nlu_acc": NluAccMetric()}
+        return {"nlu_acc": NluAccMetric(), "f1_score": SeqEvalF1Metric(label_map=self._vocab._index_to_token["tags"])}
 
     def call(self, input_ids, intent_ids=None, tags_ids=None, mask=None,
              training=True) -> Dict:
@@ -66,7 +67,7 @@ class SfId(Model):
         hidden = self.dropout(hidden, training=training)
         final_state = tf.concat([forward_h, backword_h], axis=-1)
         # (b, 2*e)
-        c_slot, c_intent = self.slot_gate_attention(hidden, final_state)
+        c_slot, c_intent = self.slot_gated_attention(hidden, final_state)
         for _id, _sf_id_subnet in enumerate(self.sf_id_subnet_stack):
             if _id == self.iteration_num - 1:
                 slot_output, intent_output, r_intent, slot_reinforce_state = _sf_id_subnet(
@@ -90,4 +91,7 @@ class SfId(Model):
             self._metrics["nlu_acc"].update_state(
                 y_true=[intent_ids, tags_ids],
                 y_pred=[y_intent, y_slot])
+            if not training:
+                self._metrics["f1_score"].update_state(y_true=tags_ids,
+                                                       y_pred=y_slot)
         return output_dict
