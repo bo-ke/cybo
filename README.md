@@ -23,9 +23,9 @@ Cybo 提供多种神经网络组件以及复现模型 - 涵盖文本分类、命
 
 ### SLU (意图槽位联合模型)
 
-| name                | paper | Description | demos |
+| name                | paper | Description | tutorials |
 | ------------------- | ----- | ----------- | ----- |
-| SlotGate            | Title |             |       |
+| SlotGated           | [Slot-Gated Modeling for Joint Slot Filling and Intent Prediction](https://www.aclweb.org/anthology/N18-2118.pdf) |             | [slot_gated](https://github.com/bo-ke/cybo/tree/master/tutorials/slu/slot_gated)      |
 | SF-ID               |       |             |       |
 | StackPropagationSLU |       |             |       |
 | BertSLU             |
