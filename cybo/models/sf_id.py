@@ -13,6 +13,7 @@
 '''
 import tensorflow as tf
 from typing import Dict
+import tensorflow_addons as tfa
 from cybo.models.model import Model
 from cybo.data.vocabulary import Vocabulary
 
@@ -22,18 +23,20 @@ from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
 from cybo.metrics.nlu_acc_metric import Metric, NluAccMetric
 from cybo.metrics.seqeval_f1_metric import SeqEvalF1Metric
+from cybo.losses.crf_loss import CrfLoss
 
 
 class SfId(Model):
     def __init__(self, embedding_dim, hidden_dim, dropout_rate,
                  vocab: Vocabulary, priority_order: str = "slot_first",
-                 iteration_num: int = 1, *args, **kwargs):
+                 iteration_num: int = 1, use_crf: bool = False, *args, **kwargs):
         super().__init__(vocab=vocab, *args, **kwargs)
 
         _vocab_size = self._vocab.get_vocab_size("text")
         _intent_size = self._vocab.get_vocab_size("intent")
         _slot_size = self._vocab.get_vocab_size("tags")
 
+        self._use_crf = use_crf
         self.embedding = tf.keras.layers.Embedding(
             input_dim=_vocab_size, output_dim=embedding_dim, mask_zero=True)
         self.bi_lstm = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(
@@ -54,7 +57,11 @@ class SfId(Model):
             _slot_size, activation="softmax")
         self.iteration_num = iteration_num
         self.intent_loss = SequenceClassificationLoss()
-        self.slot_loss = TokenClassificationLoss()
+        if use_crf:
+            self.crf = tfa.layers.CRF(_slot_size)
+            self.slot_loss = CrfLoss()
+        else:
+            self.slot_loss = TokenClassificationLoss()
 
     def init_metrics(self) -> Dict[str, Metric]:
         return {"nlu_acc": NluAccMetric(), "f1_score": SeqEvalF1Metric(label_map=self._vocab._index_to_token["tags"])}
@@ -79,13 +86,20 @@ class SfId(Model):
                 c_intent = r_intent
         y_slot = self.slot_output_dense(slot_output)
         y_intent = self.intent_output_dense(intent_output)
+        if self._use_crf:
+            decoded_sequence, potentials, sequence_length, chain_kernel = self.crf(
+                y_slot)
+            y_slot = decoded_sequence
         output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
-
         if intent_ids is not None and tags_ids is not None:
             _intent_loss = self.intent_loss.compute_loss(
                 y_true=intent_ids, y_pred=y_intent)
-            _slot_loss = self.slot_loss.compute_loss(
-                y_true=tags_ids, y_pred=y_slot)
+            if self._use_crf:
+                _slot_loss = self.slot_loss.compute_loss(
+                    potentials, tags_ids, sequence_length, chain_kernel)
+            else:
+                _slot_loss = self.slot_loss.compute_loss(
+                    y_true=tags_ids, y_pred=y_slot)
             output_dict["loss"] = _intent_loss + _slot_loss
 
             self._metrics["nlu_acc"].update_state(
