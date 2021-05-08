@@ -31,8 +31,9 @@ class NluAccMetric(Metric):
         intent_pred, slot_pred = y_pred
 
         if len(intent_pred.shape) == 2 and intent_pred.shape[1] == 1:
-            intent_acc = tf.keras.metrics.categorical_accuracy(
-                y_true=intent_true, y_pred=intent_pred)
+            # intent_pred为(batch, 1)维度
+            intent_acc = tf.squeeze(
+                tf.cast(tf.equal(intent_pred, intent_true), tf.int32))
         else:
             intent_acc = tf.keras.metrics.sparse_categorical_accuracy(
                 y_true=intent_true, y_pred=intent_pred)
