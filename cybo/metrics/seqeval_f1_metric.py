@@ -43,6 +43,8 @@ class SeqEvalF1Metric(Metric):
                                                      List[int]]:
         if len(predictions.shape) == 3:
             preds = tf.argmax(predictions, axis=2)
+        else:
+            preds = predictions
         batch_size, seq_len = preds.shape
         out_label_list = [[] for _ in range(batch_size)]
         preds_list = [[] for _ in range(batch_size)]
