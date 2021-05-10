@@ -58,7 +58,7 @@ class SfId(Model):
         self.iteration_num = iteration_num
         self.intent_loss = SequenceClassificationLoss()
         if use_crf:
-            self.crf = tfa.layers.CRF(_slot_size)
+            self.crf = tfa.layers.CRF(_slot_size, use_kernel=False)
             self.slot_loss = CrfLoss()
         else:
             self.slot_loss = TokenClassificationLoss()
