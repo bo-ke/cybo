@@ -32,7 +32,7 @@ class TokenClassificationLoss(Loss):
     def __init__(
             self,
             loss_fn: tf.keras.losses.
-            Loss = tf.keras.losses.SparseCategoricalCrossentropy()) -> None:
+            Loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)) -> None:
         super().__init__(loss_fn)
 
     def compute_loss(self, y_true, y_pred):

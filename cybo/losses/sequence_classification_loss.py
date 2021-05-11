@@ -23,8 +23,8 @@ class SequenceClassificationLoss(Loss):
     refer: huggingface: /transformers/modeling_tf_utils/TFSequenceClassificationLoss
     """
 
-    def __init__(
-            self,
-            loss_fn: tf.keras.losses.
-            Loss = tf.keras.losses.SparseCategoricalCrossentropy()) -> None:
+    def __init__(self,
+                 loss_fn: tf.keras.losses.
+                 Loss = tf.keras.losses.SparseCategoricalCrossentropy(
+                     from_logits=True)) -> None:
         super().__init__(loss_fn)

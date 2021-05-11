@@ -52,9 +52,9 @@ class SfId(Model):
                 iteration_num=iteration_num)
             for i in range(iteration_num)]
         self.intent_output_dense = tf.keras.layers.Dense(
-            _intent_size, activation="softmax")
+            _intent_size)
         self.slot_output_dense = tf.keras.layers.Dense(
-            _slot_size, activation="softmax")
+            _slot_size)
         self.iteration_num = iteration_num
         self.intent_loss = SequenceClassificationLoss()
         if use_crf:
@@ -86,11 +86,11 @@ class SfId(Model):
                 c_intent = r_intent
         y_slot = self.slot_output_dense(slot_output)
         y_intent = self.intent_output_dense(intent_output)
+        output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
         if self._use_crf:
             decoded_sequence, potentials, sequence_length, chain_kernel = self.crf(
                 y_slot)
-            y_slot = decoded_sequence
-        output_dict = {"intent_logits": y_intent, "slot_logits": y_slot}
+            output_dict["decoded_sequence"] = decoded_sequence
         if intent_ids is not None and tags_ids is not None:
             _intent_loss = self.intent_loss.compute_loss(
                 y_true=intent_ids, y_pred=y_intent)
@@ -102,10 +102,11 @@ class SfId(Model):
                     y_true=tags_ids, y_pred=y_slot)
             output_dict["loss"] = _intent_loss + _slot_loss
 
+            slot_pred = decoded_sequence if self._use_crf else y_slot
             self._metrics["nlu_acc"].update_state(
                 y_true=[intent_ids, tags_ids],
-                y_pred=[y_intent, y_slot])
+                y_pred=[y_intent, slot_pred])
             if not training:
                 self._metrics["f1_score"].update_state(y_true=tags_ids,
-                                                       y_pred=y_slot)
+                                                       y_pred=slot_pred)
         return output_dict
