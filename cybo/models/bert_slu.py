@@ -37,9 +37,9 @@ class BertSlu(Model):
         self.dropout2 = tf.keras.layers.Dropout(rate=dropout_rate)
 
         self.intent_output_dense = tf.keras.layers.Dense(
-            _intent_size, activation="softmax")
+            _intent_size)
         self.slot_output_dense = tf.keras.layers.Dense(
-            _slot_size, activation="softmax")
+            _slot_size)
 
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()

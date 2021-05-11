@@ -51,9 +51,9 @@ class StackPropagationSlu(Model):
         self.slot_decoder_dropout = tf.keras.layers.Dropout(rate=dropout_rate)
 
         self.intent_liner_layer = tf.keras.layers.Dense(
-            units=_intent_size, activation="softmax")
+            units=_intent_size)
         self.slot_liner_layer = tf.keras.layers.Dense(
-            units=_slot_size, activation="softmax")
+            units=_slot_size)
 
         self.intent_embedding = tf.keras.layers.Embedding(_intent_size, 8)
         self.slot_embedding = tf.keras.layers.Embedding(_slot_size, 32)

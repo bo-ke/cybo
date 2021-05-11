@@ -50,9 +50,9 @@ class SlotGated(Model):
         self.intent_liner_layer = tf.keras.layers.Dense(2*hidden_dim)
 
         self.intent_output_dense = tf.keras.layers.Dense(
-            _intent_size, activation="softmax")
+            _intent_size)
         self.slot_output_dense = tf.keras.layers.Dense(
-            _slot_size, activation="softmax")
+            _slot_size)
         self.intent_loss = SequenceClassificationLoss()
         self.slot_loss = TokenClassificationLoss()
 
