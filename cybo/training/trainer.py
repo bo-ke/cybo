@@ -56,10 +56,9 @@ class Trainer():
                 unit_name="sample",
                 stateful_metrics=["loss"] + list(metrics.keys()))
 
-            log_values = []
             for batch in self.training_dataloader:
                 self.train_step(batch)
-                log_values.append(("loss", self.loss_metric.result().numpy()))
+                log_values = [("loss", self.loss_metric.result().numpy())]
                 log_values.extend(
                     [(k, v) for k, v in self.model.get_metrics(
                         training=True).items()])
