@@ -1,4 +1,5 @@
 #tmp
+logs/
 dataset/
 test.py
 output_*

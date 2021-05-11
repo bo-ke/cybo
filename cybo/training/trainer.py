@@ -1,8 +1,22 @@
+# -*- coding: utf-8 -*-
+'''
+@author: kebo
+@contact: kebo0912@outlook.com
+
+@version: 1.0
+@file: trainer.py
+@time: 2021/05/12 01:09:57
+
+这一行开始写关于本文件的说明与解释
+
+
+'''
 import tensorflow as tf
 
 from cybo.data.dataloader import Dataloader
 from cybo.models.model import Model
 from cybo.training.utils import evaluate
+from cybo.training.tensorboard import TensorBoard, Mode
 
 
 class Trainer():
@@ -15,7 +29,9 @@ class Trainer():
                  validation_dataloader: Dataloader = None,
                  patience: int = 5,
                  max_to_keep: int = 3,
-                 monitor: str = "acc"
+                 monitor: str = "acc",
+                 use_tensorboard: bool = False,
+                 logs_dir: str = "logs/"
                  ) -> None:
 
         self.model = model
@@ -27,11 +43,14 @@ class Trainer():
         self.loss_metric = tf.keras.metrics.Mean(name="loss")
         self.val_loss_metric = tf.keras.metrics.Mean(name="val_loss")
 
-        # self.output_dir = output_dir
         self.checkpoint_path = checkpoint_path
         self.max_to_keep = max_to_keep
         self.monitor = monitor
         self.patience = patience
+
+        self.use_tensorboard = use_tensorboard
+        if self.use_tensorboard:
+            self.tensorboard = TensorBoard(logs_dir=logs_dir)
 
     def train(self):
         ckpt = tf.train.Checkpoint(
@@ -67,6 +86,13 @@ class Trainer():
                 model=self.model, dataloader=self.validation_dataloader)
             tf.print("validation result - " +
                      " - ".join([f"{k}: {v}" for k, v in evaluate_metrics.items()]))
+            self.tensorboard.write_logs(
+                Mode.train.value, log_values, epoch)
+            self.tensorboard.write_logs(
+                Mode.evaluate.value,
+                [(k, v) for k, v in evaluate_metrics.items()],
+                epoch)
+
             if evaluate_metrics.get(self.monitor, 1.0) >= best_acc:
                 ckpt_save_path = ckpt_manager.save()
                 tf.print(

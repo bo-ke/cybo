@@ -11,9 +11,18 @@
 
 
 '''
+from enum import Enum
 import tensorflow as tf
 from cybo.data.dataloader import Dataloader
 from cybo.models.model import Model
+
+
+class Mode(Enum):
+    """运行模式
+    """
+    train = "train"
+    evaluate = "dev"
+    test = "test"
 
 
 def evaluate(model: Model, dataloader: Dataloader):
