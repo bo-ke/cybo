@@ -27,11 +27,11 @@ for gpu in gpus:
 
 dataset_reader = SluDatasetReader()
 training_examples = dataset_reader.get_examples(
-    filepath="tutorials/slu/dataset/atis/train.txt")
+    filepath="tutorials/slu/dataset/snips/train.txt")
 validation_examples = dataset_reader.get_examples(
-    filepath="tutorials/slu/dataset/atis/dev.txt")
+    filepath="tutorials/slu/dataset/snips/dev.txt")
 test_examples = dataset_reader.get_examples(
-    filepath="tutorials/slu/dataset/atis/test.txt")
+    filepath="tutorials/slu/dataset/snips/test.txt")
 
 vocab = Vocabulary.from_examples(
     examples=training_examples + validation_examples + test_examples,
@@ -54,7 +54,7 @@ model = SlotGated(vocab=vocab, embedding_dim=256,
 def train():
     trainer = Trainer(model=model, training_dataloader=training_dataloader,
                       validation_dataloader=validation_dataloader,
-                      checkpoint_path="./output_atis_slot_gated", epochs=30,
+                      checkpoint_path="./output_snips_slot_gated", epochs=30,
                       optimizer=tf.keras.optimizers.Adam(),
                       monitor="nlu_acc")
     trainer.train()
@@ -65,7 +65,7 @@ def test_model():
         examples=test_examples, vocab=vocab, max_seq_length=32)
     test_dataloader = Dataloader.from_features(test_features, batch_size=128)
     print(test(model=model, dataloader=test_dataloader,
-               checkpoint_dir="./output_atis_slot_gated"))
+               checkpoint_dir="./output_snips_slot_gated"))
 
 
 if __name__ == "__main__":
