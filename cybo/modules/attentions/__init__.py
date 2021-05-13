@@ -12,4 +12,4 @@
 
 '''
 from cybo.modules.attentions.self_attention import SelfAttentionLayer
-from cybo.modules.attentions.slot_gated_attention import SlotGatedAttention
+from cybo.modules.attentions.additive_attention import AdditiveAttention
