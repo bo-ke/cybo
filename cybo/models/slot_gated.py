@@ -16,7 +16,7 @@ import tensorflow as tf
 
 from cybo.models.model import Model
 from cybo.data.vocabulary import Vocabulary
-from cybo.modules.attentions import SlotGatedAttention
+from cybo.modules.slot_gated_attention import SlotGatedAttention
 # from cybo.metrics.slu_overall_acc_metric import SluOverallAcc, debug
 from cybo.metrics.nlu_acc_metric import NluAccMetric
 from cybo.metrics.seqeval_f1_metric import SeqEvalF1Metric
@@ -43,6 +43,7 @@ class SlotGated(Model):
         self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
         self.slot_gated_attention = SlotGatedAttention(
             attn_size=2*hidden_dim, remove_slot_attn=False)
+        # TODO 添加remove_slot_attn 版本
 
         self.v = self.add_weight(
             name="v", shape=(2 * hidden_dim,),

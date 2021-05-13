@@ -17,7 +17,7 @@ import tensorflow_addons as tfa
 from cybo.models.model import Model
 from cybo.data.vocabulary import Vocabulary
 
-from cybo.modules.attentions.slot_gated_attention import SlotGatedAttention
+from cybo.modules.slot_gated_attention import SlotGatedAttention
 from cybo.modules.sf_id_subnet import SfIdSubnet
 from cybo.losses.sequence_classification_loss import SequenceClassificationLoss
 from cybo.losses.token_classification_loss import TokenClassificationLoss
