@@ -86,12 +86,13 @@ class Trainer():
                 model=self.model, dataloader=self.validation_dataloader)
             tf.print("validation result - " +
                      " - ".join([f"{k}: {v}" for k, v in evaluate_metrics.items()]))
-            self.tensorboard.write_logs(
-                Mode.train.value, log_values, epoch)
-            self.tensorboard.write_logs(
-                Mode.evaluate.value,
-                [(k, v) for k, v in evaluate_metrics.items()],
-                epoch)
+            if self.use_tensorboard:
+                self.tensorboard.write_logs(
+                    Mode.train.value, log_values, epoch)
+                self.tensorboard.write_logs(
+                    Mode.evaluate.value,
+                    [(k, v) for k, v in evaluate_metrics.items()],
+                    epoch)
 
             if evaluate_metrics.get(self.monitor, 1.0) >= best_acc:
                 ckpt_save_path = ckpt_manager.save()
