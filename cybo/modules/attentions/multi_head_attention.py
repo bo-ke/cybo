@@ -72,3 +72,4 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         concat_attention = tf.reshape(scaled_product_attention, [
                                       batch_size, -1, self.hidden_dim])
         return self.dense(concat_attention), attention_weights
+ 
