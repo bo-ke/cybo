@@ -12,11 +12,35 @@
 
 '''
 import tensorflow as tf
+from functools import wraps
 
 from cybo.data.dataloader import Dataloader
 from cybo.models.model import Model
 from cybo.training.utils import evaluate
 from cybo.training.tensorboard import TensorBoard, Mode
+
+
+RUN_EAGER = False
+
+
+def debug(run_eager: bool = False):
+
+    def wrapper(func):
+
+        @wraps(func)
+        @tf.function()
+        def run_with_tf_function(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        @wraps(func)
+        def run_without_tf_function(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        if run_eager:
+            return run_without_tf_function
+        else:
+            return run_with_tf_function
+    return wrapper
 
 
 class Trainer():
@@ -31,7 +55,8 @@ class Trainer():
                  max_to_keep: int = 3,
                  monitor: str = "acc",
                  use_tensorboard: bool = False,
-                 logs_dir: str = "logs/"
+                 logs_dir: str = "logs/",
+                 run_eager: bool = False
                  ) -> None:
 
         self.model = model
@@ -51,6 +76,8 @@ class Trainer():
         self.use_tensorboard = use_tensorboard
         if self.use_tensorboard:
             self.tensorboard = TensorBoard(logs_dir=logs_dir)
+        global RUN_EAGER
+        RUN_EAGER = run_eager
 
     def train(self):
         ckpt = tf.train.Checkpoint(
@@ -108,7 +135,7 @@ class Trainer():
                 break
         tf.print("Training completed !")
 
-    @tf.function()
+    @debug(run_eager=RUN_EAGER)
     def train_step(self, batch):
         with tf.GradientTape() as tape:
             output_dict = self.model(**batch, training=True)
