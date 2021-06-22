@@ -4,3 +4,4 @@ tqdm == 4.60.0
 loguru == 0.5.3
 pydantic == 1.8.1
 seqeval == 1.2.2
+pkbar == 0.5
